@@ -1,0 +1,20 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/**/*": {
+      "memory": 256,
+      "maxDuration": 10,
+      "includeFiles": "{assets/**/*}",
+      "runtime": "nodejs20.x"
+    }
+  },
+  "buildCommand": "pnpm build",
+  "outputDirectory": "",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/assets/public/Hotels.html",
+      "permanent": false
+    }
+  ]
+}

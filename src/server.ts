@@ -20,7 +20,7 @@ const EVENTS_FILE = path.join(DATA_DIR, "events.json")
 // Helper function to read events
 async function readEvents() {
   try {
-    const data = await fs.readFile(EVENTS_FILE, "utf-8")
+  const data = await fs.readFile(EVENTS_FILE, "utf-8")
     return JSON.parse(data)
   } catch (error) {
     // If file doesn't exist, return empty object
