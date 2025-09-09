@@ -10,7 +10,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "dotenv": "^17.2.2",
     "express": "^4.21.2",
+    "firebase-admin": "^13.5.0",
     "module-alias": "^2.2.3"
   },
   "devDependencies": {

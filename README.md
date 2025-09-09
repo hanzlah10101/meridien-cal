@@ -8,11 +8,8 @@ A modern Express.js server with TypeScript for managing calendar events, optimiz
 meridien/
 ├── api/                    # Vercel API functions
 │   └── [...all].ts        # Catch-all function for Express app
-├── assets/                 # Static assets and data
-│   ├── public/            # Public HTML files
-│   │   └── Hotels.html    # Main calendar interface
-│   └── data/              # Data files
-│       └── events.json    # Events storage
+├── assets/                 # Static assets
+│   └── Hotels.html        # Main calendar interface
 ├── src/                   # Source code
 │   ├── api/               # Business logic
 │   │   └── events-service.ts
@@ -21,7 +18,6 @@ meridien/
 │   ├── utils/             # Utilities
 │   │   └── file-system.ts
 │   ├── app.ts             # Main Express application
-│   └── server.ts          # Legacy server file (moved)
 ├── dist/                  # Compiled TypeScript output
 ├── package.json           # Dependencies and scripts
 ├── tsconfig.json          # TypeScript configuration
@@ -33,7 +29,7 @@ meridien/
 - **Modern TypeScript**: Strict typing with path aliases (`@/*`)
 - **Modular Architecture**: Clean separation of concerns
 - **Vercel Ready**: Optimized for serverless deployment
-- **File-based Storage**: JSON storage with Vercel-compatible paths
+- **Firebase Persistence**: Events stored in Firebase Realtime Database
 - **Express Router**: RESTful API endpoints
 - **Development Friendly**: Hot reload with `tsx`
 
@@ -41,8 +37,6 @@ meridien/
 
 - `GET /api/events` - Get all events
 - `POST /api/events` - Create a new event
-- `PUT /api/events/:dateKey/:eventId` - Update an event
-- `DELETE /api/events/:dateKey/:eventId` - Delete an event
 
 ## 🛠️ Development
 
@@ -62,6 +56,19 @@ pnpm dev
 
 # Build for production
 pnpm build
+## Firebase Realtime Database (Production persistence)
+
+This project persists events in Firebase Realtime Database when deployed.
+
+Environment variables required:
+
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY` (escape newlines as `\n` when adding in Vercel UI)
+- `FIREBASE_DATABASE_URL` (e.g., https://<project-id>-default-rtdb.<region>.firebasedatabase.app)
+
+Copy `.env.example` to `.env` for local dev and fill values. On Vercel, set them in Project Settings → Environment Variables.
+
 
 # Start production server
 pnpm start
@@ -106,11 +113,9 @@ pnpm build
 pnpm start
 ```
 
-## 🗂️ File Storage
+## 🗂️ Data Storage
 
-- **Development**: Files stored in `assets/data/`
-- **Vercel**: Ephemeral storage in `/tmp` (resets per invocation)
-- **Note**: For persistent storage, consider Vercel KV, PostgreSQL, or external databases
+Events are persisted in Firebase Realtime Database configured via environment variables.
 
 ## 🔧 Configuration
 

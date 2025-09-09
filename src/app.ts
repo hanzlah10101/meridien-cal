@@ -2,9 +2,13 @@
 import "module-alias/register"
 
 import express from "express"
+import dotenv from "dotenv"
 import path from "path"
 import { eventsRouter } from "@/routes/events"
 import { FileSystemUtils } from "@/utils/file-system"
+
+// Load env vars in local/dev
+dotenv.config()
 
 // Exportable Express app so it can run in Vercel Functions (no .listen there)
 const app = express()

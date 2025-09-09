@@ -1,4 +1,4 @@
-import { FileSystemUtils } from "@/utils/file-system"
+import { getFirebaseDb } from "@/utils/firebase"
 
 export interface Event {
   id: number
@@ -10,38 +10,34 @@ export interface Event {
 export type EventsData = Record<string, Event[]>
 
 export class EventsService {
-  private static async getEventsFilePath(): Promise<string> {
-    return FileSystemUtils.getEventsFilePath()
-  }
-
   static async readEvents(): Promise<EventsData> {
-    const filePath = await this.getEventsFilePath()
-    const events = await FileSystemUtils.readJsonFile<EventsData>(filePath)
+    const db = getFirebaseDb()
+    const snapshot = await db.ref("events").get()
+    const events = snapshot.exists() ? (snapshot.val() as EventsData) : {}
     return events || {}
   }
 
   static async writeEvents(events: EventsData): Promise<void> {
-    const filePath = await this.getEventsFilePath()
-    await FileSystemUtils.writeJsonFile(filePath, events)
+    const db = getFirebaseDb()
+    await db.ref("events").set(events)
   }
 
   static async addEvent(
     dateKey: string,
     event: Omit<Event, "id">
   ): Promise<Event> {
-    const events = await this.readEvents()
-
-    if (!events[dateKey]) {
-      events[dateKey] = []
-    }
+    const db = getFirebaseDb()
+    const dateRef = db.ref(`events/${dateKey}`)
+    const snapshot = await dateRef.get()
+    const list: Event[] = snapshot.exists() ? (snapshot.val() as Event[]) : []
 
     const newEvent: Event = {
       ...event,
       id: Date.now() + Math.random()
     }
 
-    events[dateKey].push(newEvent)
-    await this.writeEvents(events)
+    list.push(newEvent)
+    await dateRef.set(list)
 
     return newEvent
   }
@@ -51,48 +47,39 @@ export class EventsService {
     eventId: number,
     updatedEvent: Omit<Event, "id">
   ): Promise<Event | null> {
-    const events = await this.readEvents()
+    const db = getFirebaseDb()
+    const dateRef = db.ref(`events/${dateKey}`)
+    const snapshot = await dateRef.get()
+    if (!snapshot.exists()) return null
 
-    if (!events[dateKey]) {
-      return null
-    }
+    const list = (snapshot.val() as Event[]) || []
+    const idx = list.findIndex((e) => e.id == eventId)
+    if (idx === -1) return null
 
-    const eventIndex = events[dateKey].findIndex((e) => e.id == eventId)
-    if (eventIndex === -1) {
-      return null
-    }
-
-    const event: Event = {
-      ...updatedEvent,
-      id: eventId
-    }
-
-    events[dateKey][eventIndex] = event
-    await this.writeEvents(events)
-
+    const event: Event = { ...updatedEvent, id: eventId }
+    list[idx] = event
+    await dateRef.set(list)
     return event
   }
 
   static async deleteEvent(dateKey: string, eventId: number): Promise<boolean> {
-    const events = await this.readEvents()
+    const db = getFirebaseDb()
+    const dateRef = db.ref(`events/${dateKey}`)
+    const snapshot = await dateRef.get()
+    if (!snapshot.exists()) return false
 
-    if (!events[dateKey]) {
-      return false
+    const list = (snapshot.val() as Event[]) || []
+    const idx = list.findIndex((e) => e.id == eventId)
+    if (idx === -1) return false
+
+    list.splice(idx, 1)
+
+    if (list.length === 0) {
+      // remove the dateKey node entirely
+      await dateRef.remove()
+    } else {
+      await dateRef.set(list)
     }
-
-    const eventIndex = events[dateKey].findIndex((e) => e.id == eventId)
-    if (eventIndex === -1) {
-      return false
-    }
-
-    events[dateKey].splice(eventIndex, 1)
-
-    // Remove date key if no events left
-    if (events[dateKey].length === 0) {
-      delete events[dateKey]
-    }
-
-    await this.writeEvents(events)
     return true
   }
 }
