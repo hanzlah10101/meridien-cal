@@ -1,5 +1,5 @@
 import express from "express"
-import { EventsService } from "@/api/events-service"
+import { EventsService } from "../api/events-service"
 
 export const eventsRouter = express.Router()
 

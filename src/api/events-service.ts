@@ -1,4 +1,4 @@
-import { getFirebaseDb } from "@/utils/firebase"
+import { getFirebaseDb } from "../utils/firebase"
 
 export interface Event {
   id: number

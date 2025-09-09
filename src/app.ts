@@ -1,11 +1,11 @@
 // Setup module aliases for production builds
-import "module-alias/register"
+// alias disabled in production builds
 
 import express from "express"
 import dotenv from "dotenv"
 import path from "path"
-import { eventsRouter } from "@/routes/events"
-import { FileSystemUtils } from "@/utils/file-system"
+import { eventsRouter } from "./routes/events"
+import { FileSystemUtils } from "./utils/file-system"
 
 // Load env vars in local/dev
 dotenv.config()

@@ -12,8 +12,7 @@
   "dependencies": {
     "dotenv": "^17.2.2",
     "express": "^4.21.2",
-    "firebase-admin": "^13.5.0",
-    "module-alias": "^2.2.3"
+    "firebase-admin": "^13.5.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
@@ -25,8 +24,5 @@
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@10.15.1",
-  "_moduleAliases": {
-    "@": "dist"
-  }
+  "packageManager": "pnpm@10.15.1"
 }
