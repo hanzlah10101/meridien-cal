@@ -1,7 +1,8 @@
 import { getFirebaseDb } from "../utils/firebase"
 
 export interface Event {
-  id: number
+  // Accept both string and number for backward compatibility
+  id: string | number
   title?: string
   description?: string
   time?: string
@@ -31,9 +32,10 @@ export class EventsService {
     const snapshot = await dateRef.get()
     const list: Event[] = snapshot.exists() ? (snapshot.val() as Event[]) : []
 
+    // Generate a collision-resistant, URL-safe string id
     const newEvent: Event = {
       ...event,
-      id: Date.now() + Math.random()
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
     }
 
     list.push(newEvent)
@@ -44,7 +46,7 @@ export class EventsService {
 
   static async updateEvent(
     dateKey: string,
-    eventId: number,
+    eventId: string,
     updatedEvent: Omit<Event, "id">
   ): Promise<Event | null> {
     const db = getFirebaseDb()
@@ -53,7 +55,8 @@ export class EventsService {
     if (!snapshot.exists()) return null
 
     const list = (snapshot.val() as Event[]) || []
-    const idx = list.findIndex((e) => e.id == eventId)
+    // Match by string form to support both numeric and string IDs
+    const idx = list.findIndex((e) => String(e.id) === String(eventId))
     if (idx === -1) return null
 
     const event: Event = { ...updatedEvent, id: eventId }
@@ -62,14 +65,14 @@ export class EventsService {
     return event
   }
 
-  static async deleteEvent(dateKey: string, eventId: number): Promise<boolean> {
+  static async deleteEvent(dateKey: string, eventId: string): Promise<boolean> {
     const db = getFirebaseDb()
     const dateRef = db.ref(`events/${dateKey}`)
     const snapshot = await dateRef.get()
     if (!snapshot.exists()) return false
 
     const list = (snapshot.val() as Event[]) || []
-    const idx = list.findIndex((e) => e.id == eventId)
+    const idx = list.findIndex((e) => String(e.id) === String(eventId))
     if (idx === -1) return false
 
     list.splice(idx, 1)

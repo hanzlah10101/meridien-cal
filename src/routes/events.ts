@@ -42,7 +42,7 @@ eventsRouter.put("/:dateKey/:eventId", async (req, res) => {
 
     const updatedEvent = await EventsService.updateEvent(
       dateKey,
-      Number(eventId),
+      eventId,
       updatedEventData
     )
 
@@ -62,7 +62,7 @@ eventsRouter.delete("/:dateKey/:eventId", async (req, res) => {
   try {
     const { dateKey, eventId } = req.params
 
-    const deleted = await EventsService.deleteEvent(dateKey, Number(eventId))
+    const deleted = await EventsService.deleteEvent(dateKey, eventId)
 
     if (!deleted) {
       return res.status(404).json({ success: false, error: "Event not found" })
