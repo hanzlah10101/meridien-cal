@@ -17,9 +17,6 @@ importers:
       firebase-admin:
         specifier: ^13.5.0
         version: 13.5.0
-      module-alias:
-        specifier: ^2.2.3
-        version: 2.2.3
     devDependencies:
       '@types/express':
         specifier: ^5.0.3
@@ -792,9 +789,6 @@ packages:
     resolution: {integrity: sha512-jSCU7/VB1loIWBZe14aEYHU/+1UMEHoaO7qxCOVJOw9GgH72VAWppxNcjU+x9a2k3GSIBXNKxXQFqRvvZ7vr3A==}
     engines: {node: '>=10.0.0'}
     hasBin: true
-
-  module-alias@2.2.3:
-    resolution: {integrity: sha512-23g5BFj4zdQL/b6tor7Ji+QY4pEfNH784BMslY9Qb0UnJWRAt+lQGLYmRaM0KDBwIG23ffEBELhZDP2rhi9f/Q==}
 
   ms@2.0.0:
     resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
@@ -1934,8 +1928,6 @@ snapshots:
 
   mime@3.0.0:
     optional: true
-
-  module-alias@2.2.3: {}
 
   ms@2.0.0: {}
 
