@@ -249,23 +249,89 @@
         border-top-right-radius: 20px;
         padding: 20px;
         box-shadow: 0 -30px 50px rgba(0, 0, 0, 0.35);
-        transition: 0.28s bottom;
+        transition: 0.28s bottom cubic-bezier(0.25, 0.46, 0.45, 0.94);
         max-height: 75svh;
         display: flex;
         flex-direction: column;
         gap: 16px;
         overflow-y: auto;
         z-index: 1000;
+        transform: translateZ(0); /* Enable hardware acceleration */
+        will-change: transform, bottom;
+        user-select: none;
+        touch-action: pan-y;
       }
       .sheet.open {
         bottom: 0;
       }
+      .sheet.dragging {
+        transition: none !important;
+        cursor: grabbing;
+        box-shadow: 0 -40px 60px rgba(0, 0, 0, 0.5);
+        transform: translateZ(0);
+      }
+      .sheet.elastic {
+        transform: translateZ(0);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
       .sheet .drag {
-        width: 60px;
-        height: 5px;
+        width: 90px !important;
+        height: 5px !important;
+        flex-shrink: 0;
         background: #334155;
         border-radius: 999px;
         margin: 10px auto;
+        z-index: 50;
+        cursor: grab;
+        transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        position: relative;
+      }
+      .sheet .drag:before {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: -20px;
+        right: -20px;
+        bottom: -10px;
+        border-radius: 20px;
+        background: transparent;
+        transition: background 0.2s ease;
+      }
+      .sheet .drag:hover {
+        background: var(--accent);
+        transform: scale(1.1);
+      }
+      .sheet .drag:hover:before {
+        background: rgba(184, 134, 11, 0.1);
+      }
+      .sheet.dragging .drag {
+        background: var(--accent);
+        transform: scale(1.2);
+        box-shadow: 0 0 20px rgba(184, 134, 11, 0.3);
+      }
+      .sheet.dragging .drag:before {
+        background: rgba(184, 134, 11, 0.15);
+      }
+
+      /* Enhanced overlay */
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+        transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+      }
+      .overlay.active {
+        display: block;
+      }
+      .overlay.dragging {
+        transition: none !important;
       }
       .sheet h3 {
         margin: 0;
@@ -389,6 +455,122 @@
         display: block;
       }
 
+      /* Table Styles for Month View */
+      .table-container {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        background: #1e293b;
+        -webkit-overflow-scrolling: touch;
+        /* Add scrollbar styling */
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent) transparent;
+      }
+      .table-container::-webkit-scrollbar {
+        height: 8px;
+      }
+      .table-container::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .table-container::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: 4px;
+      }
+      .table-container::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-dark);
+      }
+      .events-table {
+        width: 100%;
+        min-width: 820px; /* Minimum width to ensure all columns are visible */
+        border-collapse: collapse;
+        background: #1e293b;
+        margin: 0;
+      }
+      .events-table th,
+      .events-table td {
+        padding: 12px 8px;
+        text-align: left;
+        border-bottom: 1px solid #334155;
+        font-size: 12px;
+      }
+      .events-table th {
+        background: #0f172a;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .events-table td {
+        color: var(--text);
+        vertical-align: top;
+      }
+      .events-table tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .events-table .date-col {
+        white-space: nowrap;
+        width: 120px;
+        font-weight: 600;
+        font-size: 11px;
+      }
+      .events-table .guest-col {
+        width: 120px;
+      }
+      .events-table .pax-col {
+        width: 60px;
+        text-align: center;
+      }
+      .events-table .venue-col {
+        width: 100px;
+      }
+      .events-table .food-col {
+        width: 80px;
+        text-align: center;
+      }
+      .events-table .time-col {
+        width: 140px;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .events-table .actions-col {
+        width: 120px;
+        text-align: center;
+      }
+      .food-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .food-badge.with-food {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+      .food-badge.without-food {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      .table-actions {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+      }
+      .table-actions .btn {
+        padding: 4px 8px;
+        font-size: 10px;
+        min-height: 24px;
+        width: auto;
+      }
+
       /* Small helpers */
       .sr-only {
         position: absolute;
@@ -445,32 +627,6 @@
         border-width: 2px;
       }
 
-      /* Ensure the drag handle is visible at the top of the drawer */
-      .sheet .drag {
-        width: 90px !important;
-        height: 5px !important;
-        flex-shrink: 0;
-        background: #334155;
-        border-radius: 999px;
-        margin: 10px auto;
-        z-index: 50;
-      }
-
-      /* Add overlay for closing the drawer */
-      .overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 999;
-        display: none;
-      }
-      .overlay.active {
-        display: block;
-      }
-
       @media (min-height: 900px) {
         .app {
           max-height: 920px;
@@ -478,6 +634,7 @@
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/relativeTime.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/localizedFormat.js"></script>
@@ -606,6 +763,12 @@
             <option value="Aroos-ul-Bahar">Aroos-ul-Bahar</option>
             <option value="Grand Marquee">Grand Marquee</option>
           </select>
+        </div>
+        <div class="row">
+          <label style="display: flex; align-items: center; gap: 8px">
+            <input type="checkbox" id="ev-with-food" style="width: auto" />
+            With Food
+          </label>
         </div>
         <div class="actions">
           <button type="button" class="btn secondary" id="cancel">
@@ -778,6 +941,7 @@
         evPhone: document.getElementById("ev-phone"),
         evPax: document.getElementById("ev-pax"),
         evVenue: document.getElementById("ev-venue"),
+        evWithFood: document.getElementById("ev-with-food"),
         save: document.getElementById("save"),
         cancel: document.getElementById("cancel")
       }
@@ -960,47 +1124,158 @@
         els.eventsList.innerHTML = ""
         els.eventsList.style.display = "block"
 
+        // Create table container for horizontal scrolling
+        const tableContainer = document.createElement("div")
+        tableContainer.className = "table-container"
+
+        // Create table
+        const table = document.createElement("table")
+        table.className = "events-table"
+
+        // Create header
+        const thead = document.createElement("thead")
+        const headerRow = document.createElement("tr")
+
+        const headers = [
+          { text: "Date", class: "date-col" },
+          { text: "Guest Name", class: "guest-col" },
+          { text: "Pax", class: "pax-col" },
+          { text: "Venue", class: "venue-col" },
+          { text: "W/Food", class: "food-col" },
+          { text: "Time", class: "time-col" },
+          { text: "Actions", class: "actions-col" }
+        ]
+
+        headers.forEach((header) => {
+          const th = document.createElement("th")
+          th.className = header.class
+          th.textContent = header.text
+          headerRow.appendChild(th)
+        })
+
+        thead.appendChild(headerRow)
+        table.appendChild(thead)
+
+        // Create body
+        const tbody = document.createElement("tbody")
+
         monthEvents.forEach((event, index) => {
-          const eventItem = document.createElement("div")
-          eventItem.className = "event-item"
+          const row = document.createElement("tr")
 
-          const content = document.createElement("div")
-          content.className = "content"
+          // Date column
+          const dateCell = document.createElement("td")
+          dateCell.className = "date-col"
 
-          const title = document.createElement("div")
-          title.className = "title"
-          title.textContent = event.title
+          let dateText = ""
+          if (event.start && event.end) {
+            const startDate = new Date(event.start)
+            const endDate = new Date(event.end)
 
-          const dateHeader = document.createElement("div")
-          dateHeader.className = "details"
-          dateHeader.style.fontWeight = "600"
-          dateHeader.style.color = "var(--accent)"
-          dateHeader.style.marginBottom = "8px"
-          dateHeader.textContent = `📅 ${event.dateString}`
-
-          const details = document.createElement("div")
-          details.className = "details"
-
-          let detailsText = ""
-          if (event.venue) detailsText += `📍 ${event.venue}\n`
-          if (event.guestName) detailsText += `👤 ${event.guestName}\n`
-          if (event.phone) detailsText += `📞 ${event.phone}\n`
-          if (event.pax) detailsText += `👥 ${event.pax} guests\n`
-          if (event.start) {
-            detailsText += `🕐 Start: ${formatDateTime(event.start)}\n`
+            // Check if start and end dates are the same day
+            if (startDate.toDateString() === endDate.toDateString()) {
+              dateText = startDate.toLocaleDateString("en-US", {
+                month: "2-digit",
+                day: "2-digit",
+                year: "2-digit"
+              })
+            } else {
+              dateText = `${startDate.toLocaleDateString("en-US", {
+                month: "2-digit",
+                day: "2-digit",
+                year: "2-digit"
+              })} - ${endDate.toLocaleDateString("en-US", {
+                month: "2-digit",
+                day: "2-digit",
+                year: "2-digit"
+              })}`
+            }
+          } else {
+            const eventDate = new Date(event.start || event.date)
+            dateText = eventDate.toLocaleDateString("en-US", {
+              month: "2-digit",
+              day: "2-digit",
+              year: "2-digit"
+            })
           }
-          if (event.end) {
-            detailsText += `🕐 End: ${formatDateTime(event.end)}\n`
+
+          dateCell.textContent = dateText
+          row.appendChild(dateCell)
+
+          // Guest Name column
+          const guestCell = document.createElement("td")
+          guestCell.className = "guest-col"
+          guestCell.textContent = event.guestName || "-"
+          row.appendChild(guestCell)
+
+          // Pax column
+          const paxCell = document.createElement("td")
+          paxCell.className = "pax-col"
+          paxCell.textContent = event.pax || "-"
+          row.appendChild(paxCell)
+
+          // Venue column
+          const venueCell = document.createElement("td")
+          venueCell.className = "venue-col"
+          venueCell.textContent = event.venue || "-"
+          row.appendChild(venueCell)
+
+          // With Food column
+          const foodCell = document.createElement("td")
+          foodCell.className = "food-col"
+          const foodBadge = document.createElement("span")
+          foodBadge.className = `food-badge ${
+            event.withFood ? "with-food" : "without-food"
+          }`
+          foodBadge.textContent = event.withFood ? "w/Food" : "w/o"
+          foodCell.appendChild(foodBadge)
+          row.appendChild(foodCell)
+
+          // Time column
+          const timeCell = document.createElement("td")
+          timeCell.className = "time-col"
+
+          let timeText = ""
+          if (event.start && event.end) {
+            const startTime = new Date(event.start)
+            const endTime = new Date(event.end)
+
+            const startTimeStr = startTime.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true
+            })
+            const endTimeStr = endTime.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true
+            })
+
+            // Check if times are the same
+            if (startTimeStr === endTimeStr) {
+              timeText = startTimeStr
+            } else {
+              timeText = `${startTimeStr} - ${endTimeStr}`
+            }
+          } else if (event.start) {
+            const startTime = new Date(event.start)
+            timeText = startTime.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true
+            })
+          } else {
+            timeText = "-"
           }
 
-          details.textContent = detailsText.trim() || "No additional details"
+          timeCell.textContent = timeText
+          row.appendChild(timeCell)
 
-          const notes = document.createElement("div")
-          notes.className = "notes"
-          notes.textContent = event.notes ? `"${event.notes}"` : ""
+          // Actions column
+          const actionsCell = document.createElement("td")
+          actionsCell.className = "actions-col"
 
-          const actions = document.createElement("div")
-          actions.className = "actions"
+          const actionsDiv = document.createElement("div")
+          actionsDiv.className = "table-actions"
 
           const editBtn = document.createElement("button")
           editBtn.className = "btn secondary"
@@ -1019,8 +1294,10 @@
 
           const deleteBtn = document.createElement("button")
           deleteBtn.className = "btn danger"
-          deleteBtn.textContent = "Delete"
+          deleteBtn.textContent = "Del"
           deleteBtn.addEventListener("click", async () => {
+            if (!confirm("Delete this event?")) return
+
             // Find the event in its original date and delete it
             const eventKey = toKey(event.date)
 
@@ -1041,18 +1318,17 @@
             }
           })
 
-          content.appendChild(title)
-          content.appendChild(dateHeader)
-          content.appendChild(details)
-          if (event.notes) content.appendChild(notes)
+          actionsDiv.appendChild(editBtn)
+          actionsDiv.appendChild(deleteBtn)
+          actionsCell.appendChild(actionsDiv)
+          row.appendChild(actionsCell)
 
-          actions.appendChild(editBtn)
-          actions.appendChild(deleteBtn)
-
-          eventItem.appendChild(content)
-          eventItem.appendChild(actions)
-          els.eventsList.appendChild(eventItem)
+          tbody.appendChild(row)
         })
+
+        table.appendChild(tbody)
+        tableContainer.appendChild(table)
+        els.eventsList.appendChild(tableContainer)
       }
 
       function openSheetForDate(key) {
@@ -1113,6 +1389,7 @@
           if (event.guestName) detailsText += `👤 ${event.guestName}\n`
           if (event.phone) detailsText += `📞 ${event.phone}\n`
           if (event.pax) detailsText += `👥 ${event.pax} guests\n`
+          detailsText += `🍽️ ${event.withFood ? "With Food" : "Without Food"}\n`
           if (event.start) {
             detailsText += `🕐 Start: ${formatDateTime(event.start)}\n`
           }
@@ -1181,6 +1458,7 @@
         els.evPhone.value = event.phone || ""
         els.evPax.value = event.pax || ""
         els.evVenue.value = event.venue || "Dar-ul-Khaas"
+        els.evWithFood.checked = event.withFood || false
 
         els.eventsList.style.display = "none"
         els.addEventBtn.style.display = "none"
@@ -1260,6 +1538,7 @@
         els.evPhone.value = ""
         els.evPax.value = ""
         els.evVenue.value = "Dar-ul-Khaas"
+        els.evWithFood.checked = false
         delete els.eventForm.dataset.editIndex
         delete els.eventForm.dataset.editEventId
       }
@@ -1327,7 +1606,8 @@
           guestName: els.evGuestName.value.trim(),
           phone: els.evPhone.value.trim(),
           pax: paxVal,
-          venue: els.evVenue.value
+          venue: els.evVenue.value,
+          withFood: els.evWithFood.checked
         }
 
         try {
@@ -1396,78 +1676,268 @@
         render()
       })
 
-      // Drag to close sheet
+      // Enhanced drag system with Hammer.js
       const sheet = document.getElementById("sheet")
       const dragHandler = document.getElementById("drag-handler")
       const overlay = document.getElementById("overlay")
 
-      let isDragging = false
-      let startY = 0
+      let sheetHeight = 0
+      let dragStartPosition = 0
+      let currentDragPosition = 0
+      let isAnimating = false
+      let velocityTracker = []
 
-      dragHandler.addEventListener("mousedown", (e) => {
-        isDragging = true
-        startY = e.clientY
-        e.preventDefault()
+      // Initialize Hammer.js for the entire sheet with more responsive settings
+      const hammerSheet = new Hammer(sheet, {
+        direction: Hammer.DIRECTION_VERTICAL,
+        threshold: 1, // Lower threshold for easier activation
+        pointers: 1
       })
 
-      dragHandler.addEventListener("touchstart", (e) => {
-        isDragging = true
-        startY = e.touches[0].clientY
-        e.preventDefault()
+      hammerSheet.get("pan").set({
+        direction: Hammer.DIRECTION_DOWN
       })
 
-      document.addEventListener("mousemove", (e) => {
-        if (!isDragging) return
-        const dy = e.clientY - startY
-        if (dy > 50) {
-          closeDrawer()
-          isDragging = false
+      // Enhanced drag start - immediate response
+      hammerSheet.on("panstart", (e) => {
+        if (isAnimating) return
+
+        sheetHeight = sheet.offsetHeight
+        dragStartPosition = 0
+        currentDragPosition = 0
+        velocityTracker = []
+
+        // Immediately kill any running animations for instant response
+        gsap.killTweensOf([sheet, overlay])
+        isAnimating = false // Allow immediate interaction
+
+        // Add visual feedback
+        sheet.classList.add("dragging")
+        overlay.classList.add("dragging")
+        document.body.style.overflow = "hidden"
+
+        // Light haptic feedback on supported devices
+        if (navigator.vibrate) {
+          navigator.vibrate(5)
         }
       })
 
-      document.addEventListener("touchmove", (e) => {
-        if (!isDragging) return
-        const dy = e.touches[0].clientY - startY
-        if (dy > 50) {
+      // Enhanced drag move with physics
+      hammerSheet.on("panmove", (e) => {
+        if (isAnimating) return
+
+        const deltaY = Math.max(0, e.deltaY) // Only allow downward movement
+        currentDragPosition = deltaY
+
+        // Track velocity for momentum calculations (more sensitive)
+        velocityTracker.push({
+          position: deltaY,
+          time: Date.now()
+        })
+
+        // Keep only recent velocity data for quick response
+        if (velocityTracker.length > 3) {
+          velocityTracker.shift()
+        }
+
+        // Calculate drag resistance (less resistance for easier dragging)
+        const resistance = Math.min(deltaY / (sheetHeight * 0.7), 1)
+        const easedDelta = deltaY * (1 - resistance * 0.2)
+
+        // Update sheet position with smooth resistance
+        const newBottom = Math.max(-easedDelta, -sheetHeight)
+        sheet.style.bottom = `${newBottom}px`
+        sheet.style.transform = `translateZ(0)`
+
+        // Update overlay opacity with easing
+        const dragProgress = Math.min(deltaY / (sheetHeight * 0.4), 1)
+        const easedProgress = 1 - Math.pow(dragProgress, 1.5)
+        overlay.style.opacity = Math.max(easedProgress, 0.1)
+
+        // Enhanced visual feedback based on drag distance
+        const intensity = Math.min(deltaY / (sheetHeight * 0.2), 1)
+        sheet.style.filter = `blur(${intensity * 0.5}px)`
+
+        // Drag handle glow effect
+        const glowIntensity = Math.min(intensity * 2, 1)
+        dragHandler.style.boxShadow = `0 0 ${
+          20 + glowIntensity * 20
+        }px rgba(184, 134, 11, ${0.3 + glowIntensity * 0.4})`
+      })
+
+      // Enhanced drag end with momentum and spring physics
+      hammerSheet.on("panend", (e) => {
+        if (isAnimating) return
+
+        isAnimating = true
+        const deltaY = currentDragPosition
+
+        // Calculate velocity from recent movements
+        let velocity = 0
+        if (velocityTracker.length >= 2) {
+          const recent = velocityTracker[velocityTracker.length - 1]
+          const prev = velocityTracker[velocityTracker.length - 2]
+          velocity =
+            (recent.position - prev.position) / (recent.time - prev.time)
+        }
+
+        // Determine threshold based on distance and velocity (more responsive)
+        const baseThreshold = sheetHeight * 0.15
+        const velocityThreshold =
+          velocity > 0.3 ? sheetHeight * 0.08 : baseThreshold
+        const shouldClose = deltaY > velocityThreshold || velocity > 0.8
+
+        // Clean up drag state
+        sheet.classList.remove("dragging")
+        overlay.classList.remove("dragging")
+        document.body.style.overflow = ""
+
+        if (shouldClose) {
+          // Close with smooth momentum - no pause
+          const duration = Math.max(0.2, Math.min(0.4, 0.5 - velocity * 0.15))
+
+          // Immediate smooth close without stopping
+          gsap.to(sheet, {
+            bottom: "-100%",
+            filter: "blur(1px)",
+            duration: duration,
+            ease: "power1.out", // Smoother easing
+            onComplete: () => {
+              sheet.setAttribute("aria-hidden", "true")
+              overlay.classList.remove("active")
+              sheet.classList.remove("open")
+              resetSheetStyles()
+              isAnimating = false
+            }
+          })
+
+          gsap.to(overlay, {
+            opacity: 0,
+            duration: duration,
+            ease: "power1.out"
+          })
+        } else {
+          // Elastic snap back with spring animation
+          const elasticDuration = 0.6
+
+          // Haptic feedback
+          if (navigator.vibrate) {
+            navigator.vibrate(15)
+          }
+
+          // Add elastic class for spring effect
+          sheet.classList.add("elastic")
+
+          gsap.to(sheet, {
+            bottom: "0px",
+            filter: "blur(0px)",
+            duration: elasticDuration,
+            ease: "elastic.out(1, 0.6)",
+            onComplete: () => {
+              sheet.classList.remove("elastic")
+              resetSheetStyles()
+              isAnimating = false
+            }
+          })
+
+          gsap.to(overlay, {
+            opacity: 1,
+            duration: elasticDuration * 0.6,
+            ease: "power2.out"
+          })
+
+          // Reset drag handle glow
+          gsap.to(dragHandler, {
+            boxShadow: "0 0 0px rgba(184, 134, 11, 0)",
+            duration: 0.4,
+            ease: "power2.out"
+          })
+        }
+
+        // Clear velocity tracker
+        velocityTracker = []
+      })
+
+      // Prevent scrolling when dragging on mobile
+      hammerSheet.on("panstart panmove", (e) => {
+        e.preventDefault()
+        e.srcEvent.preventDefault()
+      })
+
+      // Enhanced overlay click handler
+      overlay.addEventListener("click", (e) => {
+        if (!isAnimating) {
           closeDrawer()
-          isDragging = false
         }
       })
 
-      document.addEventListener("mouseup", () => {
-        isDragging = false
-      })
-
-      document.addEventListener("touchend", () => {
-        isDragging = false
-      })
-
-      overlay.addEventListener("click", closeDrawer)
+      // Utility function to reset all sheet styles
+      function resetSheetStyles() {
+        sheet.style.bottom = ""
+        sheet.style.transform = ""
+        sheet.style.filter = ""
+        overlay.style.opacity = ""
+        dragHandler.style.boxShadow = ""
+      }
 
       function closeDrawer() {
+        if (isAnimating) return
+        isAnimating = true
+
         gsap.to(sheet, {
           bottom: "-100%",
-          duration: 0.3,
+          duration: 0.4,
           ease: "power2.in",
           onComplete: () => {
             sheet.setAttribute("aria-hidden", "true")
             overlay.classList.remove("active")
             sheet.classList.remove("open")
+            resetSheetStyles()
+            isAnimating = false
           }
+        })
+        gsap.to(overlay, {
+          opacity: 0,
+          duration: 0.4,
+          ease: "power2.inOut"
         })
       }
 
       function openDrawer() {
-        gsap.to(sheet, {
-          bottom: "0",
-          duration: 0.3,
-          ease: "power2.out",
-          onStart: () => {
-            sheet.setAttribute("aria-hidden", "false")
-            overlay.classList.add("active")
-            sheet.classList.add("open")
+        if (isAnimating) return
+        isAnimating = true
+
+        // Reset any previous styles
+        resetSheetStyles()
+
+        gsap.fromTo(
+          sheet,
+          {
+            bottom: "-100%"
+          },
+          {
+            bottom: "0",
+            duration: 0.5,
+            ease: "power3.out",
+            onStart: () => {
+              sheet.setAttribute("aria-hidden", "false")
+              overlay.classList.add("active")
+              sheet.classList.add("open")
+            },
+            onComplete: () => {
+              isAnimating = false
+            }
           }
-        })
+        )
+        gsap.fromTo(
+          overlay,
+          { opacity: 0 },
+          {
+            opacity: 1,
+            duration: 0.3,
+            ease: "power2.out"
+          }
+        )
       }
 
       function updateNavigationButtons() {
