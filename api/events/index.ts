@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { EventsService } from "../src/api/events-service"
+import { EventsService } from "../../src/api/events-service"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
