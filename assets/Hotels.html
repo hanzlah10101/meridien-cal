@@ -237,7 +237,7 @@
         justify-content: space-between;
       }
 
-      /* Bottom Sheet */
+      /* Bottom Sheet - Optimized for performance */
       .sheet {
         position: fixed;
         left: 0;
@@ -248,31 +248,24 @@
         border-top-left-radius: 20px;
         border-top-right-radius: 20px;
         padding: 20px;
-        box-shadow: 0 -30px 50px rgba(0, 0, 0, 0.35);
-        transition: 0.15s bottom cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        transition: bottom 0.2s ease-out;
         max-height: 75svh;
         display: flex;
         flex-direction: column;
         gap: 16px;
         overflow-y: auto;
         z-index: 1000;
-        transform: translateZ(0); /* Enable hardware acceleration */
-        will-change: transform, bottom;
+        transform: translateZ(0);
+        will-change: transform;
         user-select: none;
         touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
       }
       .sheet.open {
         bottom: 0;
       }
       .sheet.dragging {
-        transition: none !important;
-        cursor: grabbing;
-        box-shadow: 0 -40px 60px rgba(0, 0, 0, 0.5);
-        transform: translateZ(0);
-      }
-      .sheet.elastic {
-        transform: translateZ(0);
-        transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: none;
       }
       .sheet .drag {
         width: 90px !important;
@@ -296,7 +289,7 @@
         background: transparent;
       }
 
-      /* Enhanced overlay */
+      /* Enhanced overlay - Simplified */
       .overlay {
         position: fixed;
         top: 0;
@@ -306,15 +299,10 @@
         background: rgba(0, 0, 0, 0.5);
         z-index: 999;
         display: none;
-        transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        backdrop-filter: blur(2px);
-        -webkit-backdrop-filter: blur(2px);
+        transition: opacity 0.2s ease-out;
       }
       .overlay.active {
         display: block;
-      }
-      .overlay.dragging {
-        transition: none !important;
       }
       .sheet h3 {
         margin: 0;
@@ -1670,10 +1658,10 @@
       let isAnimating = false
       let velocityTracker = []
 
-      // Initialize Hammer.js for the entire sheet with more responsive settings
+      // Initialize Hammer.js with minimal settings
       const hammerSheet = new Hammer(sheet, {
         direction: Hammer.DIRECTION_VERTICAL,
-        threshold: 1, // Lower threshold for easier activation
+        threshold: 5,
         pointers: 1
       })
 
@@ -1681,150 +1669,91 @@
         direction: Hammer.DIRECTION_DOWN
       })
 
-      // Enhanced drag start - immediate response
+      // Enhanced drag start - Minimal processing
       hammerSheet.on("panstart", (e) => {
         if (isAnimating) return
 
         sheetHeight = sheet.offsetHeight
-        dragStartPosition = 0
         currentDragPosition = 0
         velocityTracker = []
 
-        // Immediately kill any running animations for instant response
-        gsap.killTweensOf([sheet, overlay])
-        isAnimating = false // Allow immediate interaction
-
-        // Add visual feedback
+        // Simple state changes
         sheet.classList.add("dragging")
-        overlay.classList.add("dragging")
         document.body.style.overflow = "hidden"
-
-        // Light haptic feedback on supported devices
-        if (navigator.vibrate) {
-          navigator.vibrate(5)
-        }
       })
 
-      // Enhanced drag move with physics
+      // Enhanced drag move - Simplified for performance
       hammerSheet.on("panmove", (e) => {
         if (isAnimating) return
 
-        const deltaY = Math.max(0, e.deltaY) // Only allow downward movement
+        const deltaY = Math.max(0, e.deltaY)
         currentDragPosition = deltaY
 
-        // Track velocity for momentum calculations (more sensitive)
+        // Simple velocity tracking
         velocityTracker.push({
           position: deltaY,
           time: Date.now()
         })
 
-        // Keep only recent velocity data for quick response
-        if (velocityTracker.length > 3) {
+        if (velocityTracker.length > 2) {
           velocityTracker.shift()
         }
 
-        // Calculate drag resistance (less resistance for easier dragging)
-        const resistance = Math.min(deltaY / (sheetHeight * 0.7), 1)
-        const easedDelta = deltaY * (1 - resistance * 0.2)
-
-        // Update sheet position with smooth resistance
-        const newBottom = Math.max(-easedDelta, -sheetHeight)
+        // Simple linear drag without resistance
+        const newBottom = Math.max(-deltaY, -sheetHeight)
         sheet.style.bottom = `${newBottom}px`
-        sheet.style.transform = `translateZ(0)`
 
-        // Update overlay opacity with easing
-        const dragProgress = Math.min(deltaY / (sheetHeight * 0.4), 1)
-        const easedProgress = 1 - Math.pow(dragProgress, 1.5)
-        overlay.style.opacity = Math.max(easedProgress, 0.1)
-
-        // Enhanced visual feedback based on drag distance
-        const intensity = Math.min(deltaY / (sheetHeight * 0.2), 1)
-        sheet.style.filter = `blur(${intensity * 0.2}px)`
+        // Simple opacity fade
+        const progress = Math.min(deltaY / (sheetHeight * 0.5), 1)
+        overlay.style.opacity = 1 - progress * 0.7
       })
 
-      // Enhanced drag end with momentum and spring physics
+      // Simplified drag end
       hammerSheet.on("panend", (e) => {
         if (isAnimating) return
 
         isAnimating = true
         const deltaY = currentDragPosition
 
-        // Calculate velocity from recent movements
+        // Simple velocity calculation
         let velocity = 0
         if (velocityTracker.length >= 2) {
           const recent = velocityTracker[velocityTracker.length - 1]
-          const prev = velocityTracker[velocityTracker.length - 2]
+          const prev = velocityTracker[0]
           velocity =
             (recent.position - prev.position) / (recent.time - prev.time)
         }
 
-        // Determine threshold based on distance and velocity (more responsive)
-        const baseThreshold = sheetHeight * 0.15
-        const velocityThreshold =
-          velocity > 0.3 ? sheetHeight * 0.08 : baseThreshold
-        const shouldClose = deltaY > velocityThreshold || velocity > 0.8
+        // Simple threshold
+        const shouldClose = deltaY > sheetHeight * 0.2 || velocity > 0.5
 
-        // Clean up drag state
+        // Clean up
         sheet.classList.remove("dragging")
-        overlay.classList.remove("dragging")
         document.body.style.overflow = ""
 
         if (shouldClose) {
-          // Close with smooth momentum - very fast animation
-          const duration = Math.max(0.08, Math.min(0.15, 0.2 - velocity * 0.05))
+          // Fast close with CSS transition
+          sheet.style.bottom = "-100%"
+          overlay.style.opacity = "0"
 
-          // Immediate smooth close without stopping
-          gsap.to(sheet, {
-            bottom: "-100%",
-            filter: "blur(0px)",
-            duration: duration,
-            ease: "power1.out", // Smoother easing
-            onComplete: () => {
-              sheet.setAttribute("aria-hidden", "true")
-              overlay.classList.remove("active")
-              sheet.classList.remove("open")
-              resetSheetStyles()
-              isAnimating = false
-            }
-          })
-
-          gsap.to(overlay, {
-            opacity: 0,
-            duration: duration,
-            ease: "power1.out"
-          })
+          setTimeout(() => {
+            sheet.setAttribute("aria-hidden", "true")
+            overlay.classList.remove("active")
+            sheet.classList.remove("open")
+            resetSheetStyles()
+            isAnimating = false
+          }, 150)
         } else {
-          // Elastic snap back with spring animation - very fast
-          const elasticDuration = 0.25
+          // Fast snap back
+          sheet.style.bottom = "0px"
+          overlay.style.opacity = "1"
 
-          // Haptic feedback
-          if (navigator.vibrate) {
-            navigator.vibrate(15)
-          }
-
-          // Add elastic class for spring effect
-          sheet.classList.add("elastic")
-
-          gsap.to(sheet, {
-            bottom: "0px",
-            filter: "blur(0px)",
-            duration: elasticDuration,
-            ease: "back.out(1.7)",
-            onComplete: () => {
-              sheet.classList.remove("elastic")
-              resetSheetStyles()
-              isAnimating = false
-            }
-          })
-
-          gsap.to(overlay, {
-            opacity: 1,
-            duration: elasticDuration * 0.4,
-            ease: "power2.out"
-          })
+          setTimeout(() => {
+            resetSheetStyles()
+            isAnimating = false
+          }, 150)
         }
 
-        // Clear velocity tracker
         velocityTracker = []
       })
 
@@ -1845,7 +1774,6 @@
       function resetSheetStyles() {
         sheet.style.bottom = ""
         sheet.style.transform = ""
-        sheet.style.filter = ""
         overlay.style.opacity = ""
       }
 
@@ -1853,60 +1781,40 @@
         if (isAnimating) return
         isAnimating = true
 
-        gsap.to(sheet, {
-          bottom: "-100%",
-          duration: 0.15,
-          ease: "power2.in",
-          onComplete: () => {
-            sheet.setAttribute("aria-hidden", "true")
-            overlay.classList.remove("active")
-            sheet.classList.remove("open")
-            resetSheetStyles()
-            isAnimating = false
-          }
-        })
-        gsap.to(overlay, {
-          opacity: 0,
-          duration: 0.15,
-          ease: "power2.inOut"
-        })
+        // Use CSS transitions instead of GSAP
+        sheet.style.bottom = "-100%"
+        overlay.style.opacity = "0"
+
+        setTimeout(() => {
+          sheet.setAttribute("aria-hidden", "true")
+          overlay.classList.remove("active")
+          sheet.classList.remove("open")
+          resetSheetStyles()
+          isAnimating = false
+        }, 200)
       }
 
       function openDrawer() {
         if (isAnimating) return
         isAnimating = true
 
-        // Reset any previous styles
+        // Reset styles
         resetSheetStyles()
 
-        gsap.fromTo(
-          sheet,
-          {
-            bottom: "-100%"
-          },
-          {
-            bottom: "0",
-            duration: 0.2,
-            ease: "power3.out",
-            onStart: () => {
-              sheet.setAttribute("aria-hidden", "false")
-              overlay.classList.add("active")
-              sheet.classList.add("open")
-            },
-            onComplete: () => {
-              isAnimating = false
-            }
-          }
-        )
-        gsap.fromTo(
-          overlay,
-          { opacity: 0 },
-          {
-            opacity: 1,
-            duration: 0.15,
-            ease: "power2.out"
-          }
-        )
+        // Use CSS transitions
+        sheet.setAttribute("aria-hidden", "false")
+        overlay.classList.add("active")
+        sheet.classList.add("open")
+
+        // Small delay to ensure DOM update
+        requestAnimationFrame(() => {
+          sheet.style.bottom = "0"
+          overlay.style.opacity = "1"
+
+          setTimeout(() => {
+            isAnimating = false
+          }, 200)
+        })
       }
 
       function updateNavigationButtons() {
