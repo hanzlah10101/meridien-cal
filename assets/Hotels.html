@@ -249,7 +249,7 @@
         border-top-right-radius: 20px;
         padding: 20px;
         box-shadow: 0 -30px 50px rgba(0, 0, 0, 0.35);
-        transition: 0.28s bottom cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        transition: 0.15s bottom cubic-bezier(0.25, 0.46, 0.45, 0.94);
         max-height: 75svh;
         display: flex;
         flex-direction: column;
@@ -272,7 +272,7 @@
       }
       .sheet.elastic {
         transform: translateZ(0);
-        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       }
       .sheet .drag {
         width: 90px !important;
@@ -283,7 +283,6 @@
         margin: 10px auto;
         z-index: 50;
         cursor: grab;
-        transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         position: relative;
       }
       .sheet .drag:before {
@@ -295,22 +294,6 @@
         bottom: -10px;
         border-radius: 20px;
         background: transparent;
-        transition: background 0.2s ease;
-      }
-      .sheet .drag:hover {
-        background: var(--accent);
-        transform: scale(1.1);
-      }
-      .sheet .drag:hover:before {
-        background: rgba(184, 134, 11, 0.1);
-      }
-      .sheet.dragging .drag {
-        background: var(--accent);
-        transform: scale(1.2);
-        box-shadow: 0 0 20px rgba(184, 134, 11, 0.3);
-      }
-      .sheet.dragging .drag:before {
-        background: rgba(184, 134, 11, 0.15);
       }
 
       /* Enhanced overlay */
@@ -1756,13 +1739,7 @@
 
         // Enhanced visual feedback based on drag distance
         const intensity = Math.min(deltaY / (sheetHeight * 0.2), 1)
-        sheet.style.filter = `blur(${intensity * 0.5}px)`
-
-        // Drag handle glow effect
-        const glowIntensity = Math.min(intensity * 2, 1)
-        dragHandler.style.boxShadow = `0 0 ${
-          20 + glowIntensity * 20
-        }px rgba(184, 134, 11, ${0.3 + glowIntensity * 0.4})`
+        sheet.style.filter = `blur(${intensity * 0.2}px)`
       })
 
       // Enhanced drag end with momentum and spring physics
@@ -1793,13 +1770,13 @@
         document.body.style.overflow = ""
 
         if (shouldClose) {
-          // Close with smooth momentum - no pause
-          const duration = Math.max(0.2, Math.min(0.4, 0.5 - velocity * 0.15))
+          // Close with smooth momentum - very fast animation
+          const duration = Math.max(0.08, Math.min(0.15, 0.2 - velocity * 0.05))
 
           // Immediate smooth close without stopping
           gsap.to(sheet, {
             bottom: "-100%",
-            filter: "blur(1px)",
+            filter: "blur(0px)",
             duration: duration,
             ease: "power1.out", // Smoother easing
             onComplete: () => {
@@ -1817,8 +1794,8 @@
             ease: "power1.out"
           })
         } else {
-          // Elastic snap back with spring animation
-          const elasticDuration = 0.6
+          // Elastic snap back with spring animation - very fast
+          const elasticDuration = 0.25
 
           // Haptic feedback
           if (navigator.vibrate) {
@@ -1832,7 +1809,7 @@
             bottom: "0px",
             filter: "blur(0px)",
             duration: elasticDuration,
-            ease: "elastic.out(1, 0.6)",
+            ease: "back.out(1.7)",
             onComplete: () => {
               sheet.classList.remove("elastic")
               resetSheetStyles()
@@ -1842,14 +1819,7 @@
 
           gsap.to(overlay, {
             opacity: 1,
-            duration: elasticDuration * 0.6,
-            ease: "power2.out"
-          })
-
-          // Reset drag handle glow
-          gsap.to(dragHandler, {
-            boxShadow: "0 0 0px rgba(184, 134, 11, 0)",
-            duration: 0.4,
+            duration: elasticDuration * 0.4,
             ease: "power2.out"
           })
         }
@@ -1877,7 +1847,6 @@
         sheet.style.transform = ""
         sheet.style.filter = ""
         overlay.style.opacity = ""
-        dragHandler.style.boxShadow = ""
       }
 
       function closeDrawer() {
@@ -1886,7 +1855,7 @@
 
         gsap.to(sheet, {
           bottom: "-100%",
-          duration: 0.4,
+          duration: 0.15,
           ease: "power2.in",
           onComplete: () => {
             sheet.setAttribute("aria-hidden", "true")
@@ -1898,7 +1867,7 @@
         })
         gsap.to(overlay, {
           opacity: 0,
-          duration: 0.4,
+          duration: 0.15,
           ease: "power2.inOut"
         })
       }
@@ -1917,7 +1886,7 @@
           },
           {
             bottom: "0",
-            duration: 0.5,
+            duration: 0.2,
             ease: "power3.out",
             onStart: () => {
               sheet.setAttribute("aria-hidden", "false")
@@ -1934,7 +1903,7 @@
           { opacity: 0 },
           {
             opacity: 1,
-            duration: 0.3,
+            duration: 0.15,
             ease: "power2.out"
           }
         )
