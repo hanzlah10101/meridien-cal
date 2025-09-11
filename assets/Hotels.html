@@ -237,7 +237,7 @@
         justify-content: space-between;
       }
 
-      /* Bottom Sheet - Optimized for performance */
+      /* Bottom Sheet - Simple and clean */
       .sheet {
         position: fixed;
         left: 0;
@@ -247,46 +247,41 @@
         border-top: 1px solid #1f2937;
         border-top-left-radius: 20px;
         border-top-right-radius: 20px;
-        padding: 20px;
-        transition: bottom 0.2s ease-out;
+        transition: bottom 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         max-height: 75svh;
         display: flex;
         flex-direction: column;
-        gap: 16px;
-        overflow-y: auto;
         z-index: 1000;
-        transform: translateZ(0);
-        will-change: transform;
-        user-select: none;
-        touch-action: pan-y;
         -webkit-overflow-scrolling: touch;
       }
       .sheet.open {
         bottom: 0;
       }
-      .sheet.dragging {
-        transition: none;
+      .sheet-header {
+        padding: 15px 20px 20px 20px;
+        cursor: pointer;
+        user-select: none;
+        flex-shrink: 0;
+        touch-action: pan-y;
       }
       .sheet .drag {
-        width: 90px !important;
-        height: 5px !important;
-        flex-shrink: 0;
+        width: 90px;
+        height: 5px;
         background: #334155;
         border-radius: 999px;
-        margin: 10px auto;
-        z-index: 50;
-        cursor: grab;
-        position: relative;
+        margin: 0 auto;
       }
-      .sheet .drag:before {
-        content: "";
-        position: absolute;
-        top: -10px;
-        left: -20px;
-        right: -20px;
-        bottom: -10px;
-        border-radius: 20px;
-        background: transparent;
+      .sheet-body {
+        padding: 0 20px 20px 20px;
+        overflow-y: auto;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .sheet h3 {
+        margin: 0 0 16px 0;
+        font-size: 16px;
       }
 
       /* Enhanced overlay - Simplified */
@@ -604,8 +599,6 @@
         }
       }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/relativeTime.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/localizedFormat.js"></script>
@@ -664,90 +657,94 @@
       aria-hidden="true"
       aria-label="Event Editor"
     >
-      <div class="drag" id="drag-handler"></div>
-      <h3 id="sheet-title">Events</h3>
-
-      <!-- Events List -->
-      <div id="events-list" class="events-list" style="display: none">
-        <!-- Events will be populated here -->
+      <div class="sheet-header" id="sheet-header">
+        <div class="drag"></div>
       </div>
 
-      <!-- Add Event Button -->
-      <button id="add-event-btn" class="btn accent" style="display: none">
-        ＋ Add Event
-      </button>
+      <div class="sheet-body">
+        <h3 id="sheet-title">Events</h3>
 
-      <!-- Event Form -->
-      <form id="event-form" class="event-form" novalidate>
-        <div class="row">
-          <label for="ev-title">Title</label>
-          <input id="ev-title" placeholder="e.g., Team Meeting" required />
+        <!-- Events List -->
+        <div id="events-list" class="events-list" style="display: none">
+          <!-- Events will be populated here -->
         </div>
-        <div class="row">
-          <label for="ev-notes">Notes</label>
-          <textarea
-            id="ev-notes"
-            placeholder="Details, location, etc."
-          ></textarea>
-        </div>
-        <div class="row">
-          <label>Start Date & Time</label>
-          <div style="display: flex; gap: 8px">
-            <input id="ev-start-date" type="date" required style="flex: 1" />
-            <input id="ev-start-time" type="time" required style="flex: 1" />
+        <!-- Add Event Button -->
+        <button id="add-event-btn" class="btn accent" style="display: none">
+          ＋ Add Event
+        </button>
+
+        <!-- Event Form -->
+        <form id="event-form" class="event-form" novalidate>
+          <div class="row">
+            <label for="ev-title">Title</label>
+            <input id="ev-title" placeholder="e.g., Team Meeting" required />
           </div>
-        </div>
-        <div class="row">
-          <label>End Date & Time</label>
-          <div style="display: flex; gap: 8px">
-            <input id="ev-end-date" type="date" required style="flex: 1" />
-            <input id="ev-end-time" type="time" required style="flex: 1" />
+          <div class="row">
+            <label for="ev-notes">Notes</label>
+            <textarea
+              id="ev-notes"
+              placeholder="Details, location, etc."
+            ></textarea>
           </div>
-        </div>
-        <div class="row">
-          <label for="ev-guest-name">Guest Name</label>
-          <input id="ev-guest-name" placeholder="e.g., John Doe" required />
-        </div>
-        <div class="row">
-          <label for="ev-phone">Guest Phone</label>
-          <input
-            id="ev-phone"
-            type="tel"
-            placeholder="e.g., +1234567890"
-            required
-          />
-        </div>
-        <div class="row">
-          <label for="ev-pax">Pax (No. of Guests)</label>
-          <input
-            id="ev-pax"
-            type="number"
-            min="1"
-            placeholder="e.g., 50"
-            required
-          />
-        </div>
-        <div class="row">
-          <label for="ev-venue">Venue</label>
-          <select id="ev-venue" required>
-            <option value="Dar-ul-Khaas">Dar-ul-Khaas</option>
-            <option value="Aroos-ul-Bahar">Aroos-ul-Bahar</option>
-            <option value="Grand Marquee">Grand Marquee</option>
-          </select>
-        </div>
-        <div class="row">
-          <label style="display: flex; align-items: center; gap: 8px">
-            <input type="checkbox" id="ev-with-food" style="width: auto" />
-            With Food
-          </label>
-        </div>
-        <div class="actions">
-          <button type="button" class="btn secondary" id="cancel">
-            Cancel
-          </button>
-          <button type="submit" class="btn accent" id="save">Save</button>
-        </div>
-      </form>
+          <div class="row">
+            <label>Start Date & Time</label>
+            <div style="display: flex; gap: 8px">
+              <input id="ev-start-date" type="date" required style="flex: 1" />
+              <input id="ev-start-time" type="time" required style="flex: 1" />
+            </div>
+          </div>
+          <div class="row">
+            <label>End Date & Time</label>
+            <div style="display: flex; gap: 8px">
+              <input id="ev-end-date" type="date" required style="flex: 1" />
+              <input id="ev-end-time" type="time" required style="flex: 1" />
+            </div>
+          </div>
+          <div class="row">
+            <label for="ev-guest-name">Guest Name</label>
+            <input id="ev-guest-name" placeholder="e.g., John Doe" required />
+          </div>
+          <div class="row">
+            <label for="ev-phone">Guest Phone</label>
+            <input
+              id="ev-phone"
+              type="tel"
+              placeholder="e.g., +1234567890"
+              required
+            />
+          </div>
+          <div class="row">
+            <label for="ev-pax">Pax (No. of Guests)</label>
+            <input
+              id="ev-pax"
+              type="number"
+              min="1"
+              placeholder="e.g., 50"
+              required
+            />
+          </div>
+          <div class="row">
+            <label for="ev-venue">Venue</label>
+            <select id="ev-venue" required>
+              <option value="Dar-ul-Khaas">Dar-ul-Khaas</option>
+              <option value="Aroos-ul-Bahar">Aroos-ul-Bahar</option>
+              <option value="Grand Marquee">Grand Marquee</option>
+            </select>
+          </div>
+          <div class="row">
+            <label style="display: flex; align-items: center; gap: 8px">
+              <input type="checkbox" id="ev-with-food" style="width: auto" />
+              With Food
+            </label>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn secondary" id="cancel">
+              Cancel
+            </button>
+            <button type="submit" class="btn accent" id="save">Save</button>
+          </div>
+        </form>
+      </div>
     </aside>
     <script>
       // Initialize Day.js plugins
@@ -1647,141 +1644,86 @@
         render()
       })
 
-      // Enhanced drag system with Hammer.js
+      // Header drag and click functionality
       const sheet = document.getElementById("sheet")
-      const dragHandler = document.getElementById("drag-handler")
+      const sheetHeader = document.getElementById("sheet-header")
       const overlay = document.getElementById("overlay")
 
+      let isDragging = false
+      let startY = 0
+      let currentY = 0
       let sheetHeight = 0
-      let dragStartPosition = 0
-      let currentDragPosition = 0
-      let isAnimating = false
-      let velocityTracker = []
 
-      // Initialize Hammer.js with minimal settings
-      const hammerSheet = new Hammer(sheet, {
-        direction: Hammer.DIRECTION_VERTICAL,
-        threshold: 5,
-        pointers: 1
-      })
-
-      hammerSheet.get("pan").set({
-        direction: Hammer.DIRECTION_DOWN
-      })
-
-      // Enhanced drag start - Minimal processing
-      hammerSheet.on("panstart", (e) => {
-        if (isAnimating) return
-
+      // Touch and mouse event handlers
+      function handleStart(e) {
+        isDragging = true
+        startY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY
         sheetHeight = sheet.offsetHeight
-        currentDragPosition = 0
-        velocityTracker = []
-
-        // Simple state changes
-        sheet.classList.add("dragging")
+        sheet.style.transition = "none"
         document.body.style.overflow = "hidden"
-      })
+      }
 
-      // Enhanced drag move - Simplified for performance
-      hammerSheet.on("panmove", (e) => {
-        if (isAnimating) return
+      function handleMove(e) {
+        if (!isDragging) return
 
-        const deltaY = Math.max(0, e.deltaY)
-        currentDragPosition = deltaY
-
-        // Simple velocity tracking
-        velocityTracker.push({
-          position: deltaY,
-          time: Date.now()
-        })
-
-        if (velocityTracker.length > 2) {
-          velocityTracker.shift()
-        }
-
-        // Simple linear drag without resistance
-        const newBottom = Math.max(-deltaY, -sheetHeight)
-        sheet.style.bottom = `${newBottom}px`
-
-        // Simple opacity fade
-        const progress = Math.min(deltaY / (sheetHeight * 0.5), 1)
-        overlay.style.opacity = 1 - progress * 0.7
-      })
-
-      // Simplified drag end
-      hammerSheet.on("panend", (e) => {
-        if (isAnimating) return
-
-        isAnimating = true
-        const deltaY = currentDragPosition
-
-        // Simple velocity calculation
-        let velocity = 0
-        if (velocityTracker.length >= 2) {
-          const recent = velocityTracker[velocityTracker.length - 1]
-          const prev = velocityTracker[0]
-          velocity =
-            (recent.position - prev.position) / (recent.time - prev.time)
-        }
-
-        // Simple threshold
-        const shouldClose = deltaY > sheetHeight * 0.2 || velocity > 0.5
-
-        // Clean up
-        sheet.classList.remove("dragging")
-        document.body.style.overflow = ""
-
-        if (shouldClose) {
-          // Fast close with CSS transition
-          sheet.style.bottom = "-100%"
-          overlay.style.opacity = "0"
-
-          setTimeout(() => {
-            sheet.setAttribute("aria-hidden", "true")
-            overlay.classList.remove("active")
-            sheet.classList.remove("open")
-            resetSheetStyles()
-            isAnimating = false
-          }, 150)
-        } else {
-          // Fast snap back
-          sheet.style.bottom = "0px"
-          overlay.style.opacity = "1"
-
-          setTimeout(() => {
-            resetSheetStyles()
-            isAnimating = false
-          }, 150)
-        }
-
-        velocityTracker = []
-      })
-
-      // Prevent scrolling when dragging on mobile
-      hammerSheet.on("panstart panmove", (e) => {
         e.preventDefault()
-        e.srcEvent.preventDefault()
-      })
+        currentY =
+          (e.type === "touchmove" ? e.touches[0].clientY : e.clientY) - startY
 
-      // Enhanced overlay click handler
-      overlay.addEventListener("click", (e) => {
-        if (!isAnimating) {
+        if (currentY > 0) {
+          const newBottom = Math.max(-currentY, -sheetHeight)
+          sheet.style.bottom = `${newBottom}px`
+
+          // Update overlay opacity
+          const progress = Math.min(currentY / (sheetHeight * 0.4), 1)
+          overlay.style.opacity = 1 - progress * 0.7
+        }
+      }
+
+      function handleEnd(e) {
+        if (!isDragging) return
+
+        isDragging = false
+        document.body.style.overflow = ""
+        sheet.style.transition = "bottom 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)"
+
+        // If dragged down more than 25% of sheet height, close
+        if (currentY > sheetHeight * 0.25) {
+          closeDrawer()
+        } else {
+          // Snap back
+          sheet.style.bottom = "0"
+          overlay.style.opacity = "1"
+        }
+
+        currentY = 0
+      }
+
+      // Add event listeners for touch and mouse
+      sheetHeader.addEventListener("touchstart", handleStart, {
+        passive: false
+      })
+      sheetHeader.addEventListener("touchmove", handleMove, { passive: false })
+      sheetHeader.addEventListener("touchend", handleEnd)
+
+      sheetHeader.addEventListener("mousedown", handleStart)
+      document.addEventListener("mousemove", handleMove)
+      document.addEventListener("mouseup", handleEnd)
+
+      // Click to close (only if not dragged)
+      sheetHeader.addEventListener("click", (e) => {
+        if (Math.abs(currentY) < 5) {
+          // Only close if it was a click, not a drag
           closeDrawer()
         }
       })
 
-      // Utility function to reset all sheet styles
-      function resetSheetStyles() {
-        sheet.style.bottom = ""
-        sheet.style.transform = ""
-        overlay.style.opacity = ""
-      }
+      // Overlay click handler
+      overlay.addEventListener("click", () => {
+        closeDrawer()
+      })
 
       function closeDrawer() {
-        if (isAnimating) return
-        isAnimating = true
-
-        // Use CSS transitions instead of GSAP
         sheet.style.bottom = "-100%"
         overlay.style.opacity = "0"
 
@@ -1789,32 +1731,15 @@
           sheet.setAttribute("aria-hidden", "true")
           overlay.classList.remove("active")
           sheet.classList.remove("open")
-          resetSheetStyles()
-          isAnimating = false
-        }, 200)
+          sheet.style.bottom = ""
+          overlay.style.opacity = ""
+        }, 300)
       }
 
       function openDrawer() {
-        if (isAnimating) return
-        isAnimating = true
-
-        // Reset styles
-        resetSheetStyles()
-
-        // Use CSS transitions
         sheet.setAttribute("aria-hidden", "false")
         overlay.classList.add("active")
         sheet.classList.add("open")
-
-        // Small delay to ensure DOM update
-        requestAnimationFrame(() => {
-          sheet.style.bottom = "0"
-          overlay.style.opacity = "1"
-
-          setTimeout(() => {
-            isAnimating = false
-          }, 200)
-        })
       }
 
       function updateNavigationButtons() {
