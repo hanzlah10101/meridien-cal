@@ -5,7 +5,17 @@ export interface Event {
   id: string | number
   title?: string
   description?: string
+  notes?: string
   time?: string
+  start?: string
+  end?: string
+  guestName?: string
+  phone?: string
+  pax?: number
+  venue?: string
+  withFood?: boolean
+  mealType?: string
+  type?: string
 }
 
 export type EventsData = Record<string, Event[]>
