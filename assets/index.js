@@ -21,10 +21,12 @@ const getMealTypeFromStart = (startDateOrString) => {
     if (isNaN(startTime.getTime())) return undefined
 
     const hour = startTime.getHours()
-    if (hour >= 12 && hour < 18) {
+    if (hour >= 6 && hour < 12) {
+      return "breakfast"
+    } else if (hour >= 12 && hour < 18) {
       return "lunch"
-    } else if (hour >= 18 || hour < 6) {
-      return "dinner"
+    } else {
+      return "dinner"  // 18-23 or 0-5
     }
     return undefined
   } catch (error) {

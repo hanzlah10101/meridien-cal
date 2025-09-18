@@ -188,7 +188,7 @@ body {
 }
 .cell.faded {
   opacity: 0.35;
-  color: aaa;
+  color: #aaa;
 }
 .cell.today {
   border-color: var(--accent);
@@ -347,7 +347,7 @@ select {
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: var(--accent-2);
+  border-color: var(--accent);
 }
 textarea {
   min-height: 70px;
