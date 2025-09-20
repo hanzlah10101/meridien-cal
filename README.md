@@ -9,7 +9,7 @@ meridien/
 ├── api/                    # Vercel API functions
 │   └── [...all].ts        # Catch-all function for Express app
 ├── assets/                 # Static assets
-│   └── Hotels.html        # Main calendar interface
+│   └── events.html        # Main calendar interface
 ├── src/                   # Source code
 │   ├── api/               # Business logic
 │   │   └── events-service.ts

@@ -19,18 +19,8 @@ body {
 }
 body {
   margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    Segoe UI,
-    Roboto,
-    Noto Sans,
-    Ubuntu,
-    Cantarell,
-    "Helvetica Neue",
-    Arial,
-    "Apple Color Emoji",
-    "Segoe UI Emoji";
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu,
+    Cantarell, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
   background: radial-gradient(
     1000px 600px at 50% -10%,
     #1f2937 0%,
@@ -110,10 +100,7 @@ body {
   border-radius: 14px;
   cursor: pointer;
   box-shadow: var(--shadow);
-  transition:
-    0.2s transform,
-    0.2s background,
-    0.2s border-color;
+  transition: 0.2s transform, 0.2s background, 0.2s border-color;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -181,9 +168,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  transition:
-    0.2s border-color,
-    0.2s transform;
+  transition: 0.2s border-color, 0.2s transform;
   color: #f8f8f8;
 }
 .cell.faded {

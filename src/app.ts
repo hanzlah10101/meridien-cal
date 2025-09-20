@@ -25,7 +25,7 @@ app.use("/api/events", eventsRouter)
 
 // Serve the main HTML file
 app.get("/", (req, res) => {
-  const htmlPath = path.join(FileSystemUtils.getPublicPath(), "Hotels.html")
+  const htmlPath = path.join(FileSystemUtils.getPublicPath(), "events.html")
   res.sendFile(htmlPath)
 })
 
