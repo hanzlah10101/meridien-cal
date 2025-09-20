@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8" />
@@ -29,8 +29,17 @@
       }
       body {
         margin: 0;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans,
-          Ubuntu, Cantarell, "Helvetica Neue", Arial, "Apple Color Emoji",
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Noto Sans,
+          Ubuntu,
+          Cantarell,
+          "Helvetica Neue",
+          Arial,
+          "Apple Color Emoji",
           "Segoe UI Emoji";
         background: radial-gradient(
           1000px 600px at 50% -10%,
@@ -111,7 +120,10 @@
         border-radius: 14px;
         cursor: pointer;
         box-shadow: var(--shadow);
-        transition: 0.2s transform, 0.2s background, 0.2s border-color;
+        transition:
+          0.2s transform,
+          0.2s background,
+          0.2s border-color;
         display: inline-flex;
         align-items: center;
         gap: 8px;
@@ -179,7 +191,9 @@
         display: flex;
         flex-direction: column;
         gap: 6px;
-        transition: 0.2s border-color, 0.2s transform;
+        transition:
+          0.2s border-color,
+          0.2s transform;
         color: #f8f8f8;
       }
       .cell.faded {
@@ -667,112 +681,16 @@
           grid-column: 1 / -1;
         }
       }
-
-      /* Authentication & Loading Screens */
-      .auth-screen,
-      .loading-screen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(
-          1000px 600px at 50% -10%,
-          #1f2937 0%,
-          var(--bg) 50%
-        );
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2000;
-        opacity: 1;
-        transition: opacity 0.3s ease;
-      }
-
-      .auth-screen.hidden,
-      .loading-screen.hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      .loading-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
-        text-align: center;
-      }
-
-      .loading-spinner {
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
-        border-top-color: var(--accent);
-        animation: spin 1s linear infinite;
-      }
-
-      .loading-text {
-        font-size: 16px;
-        color: var(--muted);
-      }
-
-      .logout-btn {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid #263247;
-        color: var(--muted);
-        padding: 8px 12px;
-        border-radius: 12px;
-        font-size: 12px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .logout-btn:hover {
-        background: rgba(0, 0, 0, 0.4);
-        color: var(--text);
-        border-color: #334155;
-      }
-
-      @media (max-width: 480px) {
-        .logout-btn {
-          top: 12px;
-          right: 12px;
-          padding: 6px 10px;
-          font-size: 11px;
-        }
-      }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/relativeTime.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/localizedFormat.js"></script>
   </head>
   <body>
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loading-screen">
-      <div class="loading-content">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Loading...</div>
-      </div>
-    </div>
-
     <!-- Add overlay element -->
     <div class="overlay" id="overlay"></div>
 
-    <!-- Logout Button -->
-    <button class="logout-btn" id="logout-btn" style="display: none">
-      Sign Out
-    </button>
-
-    <main
-      class="app"
-      aria-label="Calendar App"
-      id="main-app"
-      style="display: none"
-    >
+    <main class="app" aria-label="Calendar App">
       <header class="bar">
         <div class="title" aria-live="polite">
           <span class="month" id="label-month">Month</span>
@@ -919,119 +837,6 @@
         </form>
       </div>
     </aside>
-    <!-- Firebase Authentication and App Scripts -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"
-      import {
-        getAuth,
-        onAuthStateChanged,
-        signOut
-      } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js"
-
-      // Firebase config
-      const firebaseConfig = {
-        apiKey: "AIzaSyDAaZo9T9CVa2yTC-t6_WL4Ljy-Uce_IeE",
-        authDomain: "meridien-cal.firebaseapp.com",
-        databaseURL:
-          "https://meridien-cal-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "meridien-cal",
-        storageBucket: "meridien-cal.firebasestorage.app",
-        messagingSenderId: "872918390831",
-        appId: "1:872918390831:web:f262c134a3f14ee50d0eda",
-        measurementId: "G-TQ3SDN7CF6"
-      }
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig)
-      const auth = getAuth(app)
-
-      // DOM elements
-      const loadingScreen = document.getElementById("loading-screen")
-      const mainApp = document.getElementById("main-app")
-      const logoutBtn = document.getElementById("logout-btn")
-
-      let currentUser = null
-      let authToken = null
-
-      // Auth state observer
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          try {
-            // User is signed in
-            currentUser = user
-            authToken = await user.getIdToken()
-            localStorage.setItem("authToken", authToken)
-
-            // Show main app, hide loading
-            loadingScreen.classList.add("hidden")
-            mainApp.style.display = "flex"
-            logoutBtn.style.display = "block"
-
-            // Initialize the calendar app
-            if (typeof initializeCalendarApp === "function") {
-              initializeCalendarApp()
-            }
-          } catch (error) {
-            console.error("Error getting auth token:", error)
-            redirectToLogin()
-          }
-        } else {
-          // User is signed out
-          currentUser = null
-          authToken = null
-          localStorage.removeItem("authToken")
-          redirectToLogin()
-        }
-      })
-
-      // Logout function
-      logoutBtn.addEventListener("click", async () => {
-        try {
-          await signOut(auth)
-        } catch (error) {
-          console.error("Error signing out:", error)
-        }
-      })
-
-      // Redirect to login
-      function redirectToLogin() {
-        window.location.href = "/login"
-      }
-
-      // Enhanced fetch function with auth
-      window.authenticatedFetch = async (url, options = {}) => {
-        const token = localStorage.getItem("authToken") || authToken
-
-        if (!token) {
-          throw new Error("No authentication token available")
-        }
-
-        const headers = {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          ...options.headers
-        }
-
-        const response = await fetch(url, {
-          ...options,
-          headers
-        })
-
-        if (response.status === 401) {
-          // Token expired or invalid, redirect to login
-          localStorage.removeItem("authToken")
-          redirectToLogin()
-          throw new Error("Authentication expired")
-        }
-
-        return response
-      }
-
-      // Make auth utilities available globally
-      window.auth = auth
-      window.currentUser = () => currentUser
-      window.getAuthToken = () => authToken
-    </script>
     <script src="index.js"></script>
   </body>
 </html>
