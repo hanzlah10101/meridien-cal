@@ -23,9 +23,15 @@ app.use(express.static(FileSystemUtils.getPublicPath()))
 // API Routes
 app.use("/api/events", eventsRouter)
 
+// Serve the login page
+app.get("/login", (req, res) => {
+  const loginPath = path.join(FileSystemUtils.getPublicPath(), "login.html")
+  res.sendFile(loginPath)
+})
+
 // Serve the main HTML file
 app.get("/", (req, res) => {
-  const htmlPath = path.join(FileSystemUtils.getPublicPath(), "Hotels.html")
+  const htmlPath = path.join(FileSystemUtils.getPublicPath(), "hotels.html")
   res.sendFile(htmlPath)
 })
 

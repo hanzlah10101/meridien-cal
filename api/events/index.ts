@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
 import { EventsService } from "../../src/api/events-service"
+import { authenticateRequest } from "../_auth"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
@@ -11,11 +12,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   )
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
   )
 
   if (req.method === "OPTIONS") {
     res.status(200).end()
+    return
+  }
+
+  // Authenticate the request
+  const user = await authenticateRequest(req, res)
+  if (!user) {
+    // Response already sent by authenticateRequest
     return
   }
 
