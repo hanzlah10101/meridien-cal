@@ -26,7 +26,7 @@ const getMealTypeFromStart = (startDateOrString) => {
     } else if (hour >= 12 && hour < 18) {
       return "lunch"
     } else {
-      return "dinner" // 18-23 or 0-5
+      return "dinner"  // 18-23 or 0-5
     }
     return undefined
   } catch (error) {
@@ -59,20 +59,20 @@ let events = {}
 // API helpers
 async function apiCall(url, options = {}) {
   try {
-    // Use the global authenticatedFetch function if available
-    if (typeof window.authenticatedFetch === "function") {
-      const response = await window.authenticatedFetch(url, options)
-      const data = await response.json()
+    const response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers
+      },
+      ...options
+    })
+    const data = await response.json()
 
-      if (!data.success) {
-        throw new Error(data.error || "API call failed")
-      }
-
-      return data
-    } else {
-      // Fallback for when auth isn't ready yet
-      throw new Error("Authentication not initialized")
+    if (!data.success) {
+      throw new Error(data.error || "API call failed")
     }
+
+    return data
   } catch (error) {
     console.error("API Error:", error)
     throw error
@@ -515,9 +515,7 @@ function showMonthEventsList(monthEvents) {
       let mealType = event.mealType || getMealTypeFromStart(event.start)
 
       if (mealType) {
-        mealBadge = `<span class="meal-badge ${mealType}">${
-          mealType.charAt(0).toUpperCase() + mealType.slice(1)
-        }</span>`
+        mealBadge = `<span class="meal-badge ${mealType}">${mealType.charAt(0).toUpperCase() + mealType.slice(1)}</span>`
       }
     } else if (event.start) {
       const startTime = new Date(event.start)
@@ -653,9 +651,7 @@ function showEventsList(list) {
     let mealType = event.mealType || getMealTypeFromStart(event.start)
 
     if (mealType) {
-      titleHTML += ` <span class="meal-badge ${mealType}">${
-        mealType.charAt(0).toUpperCase() + mealType.slice(1)
-      }</span>`
+      titleHTML += ` <span class="meal-badge ${mealType}">${mealType.charAt(0).toUpperCase() + mealType.slice(1)}</span>`
     }
 
     title.innerHTML = titleHTML
@@ -736,9 +732,9 @@ function editEvent(index) {
 
   if (event.start) {
     const s = new Date(event.start)
-    els.evStartDate.value = `${s.getFullYear()}-${pad(s.getMonth() + 1)}-${pad(
-      s.getDate()
-    )}`
+    els.evStartDate.value = `${s.getFullYear()}-${pad(
+      s.getMonth() + 1
+    )}-${pad(s.getDate())}`
     els.evStartTime.value = `${pad(s.getHours())}:${pad(s.getMinutes())}`
   } else {
     els.evStartDate.value = selectedKey || ""
@@ -1130,22 +1126,16 @@ function populateVenueSelector() {
   })
 }
 
-// Initialize Calendar App (called after authentication)
-function initializeCalendarApp() {
-  // Initial render
-  loadEvents() // Load events from API first
+// Initial render
+loadEvents() // Load events from API first
+updateNavigationButtons()
+
+// Populate year selector and add change event
+populateYearSelector()
+populateVenueSelector()
+els.year.addEventListener("change", (e) => {
+  const selectedYear = parseInt(e.target.value)
+  view = new Date(selectedYear, view.getMonth(), 1)
+  render()
   updateNavigationButtons()
-
-  // Populate year selector and add change event
-  populateYearSelector()
-  populateVenueSelector()
-  els.year.addEventListener("change", (e) => {
-    const selectedYear = parseInt(e.target.value)
-    view = new Date(selectedYear, view.getMonth(), 1)
-    render()
-    updateNavigationButtons()
-  })
-}
-
-// Make function available globally for auth script
-window.initializeCalendarApp = initializeCalendarApp
+})
