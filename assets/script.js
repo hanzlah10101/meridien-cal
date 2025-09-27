@@ -80,9 +80,11 @@ async function apiCall(url, options = {}) {
 }
 
 // Load all events from server
-async function loadEvents() {
+async function loadEvents(isInitialLoad = false) {
   try {
-    els.calendar.classList.add("loading")
+    if (!isInitialLoad) {
+      els.pageLoader.classList.remove("hide")
+    }
     const response = await apiCall("/api/events")
     events = response.data || {}
     render()
@@ -92,7 +94,13 @@ async function loadEvents() {
     events = {}
     render()
   } finally {
-    els.calendar.classList.remove("loading")
+    if (isInitialLoad) {
+      // Show app and hide loader on initial load
+      els.app.classList.add("loaded")
+      els.pageLoader.classList.add("hide")
+    } else {
+      els.pageLoader.classList.add("hide")
+    }
   }
 }
 
@@ -158,7 +166,9 @@ let showHijri = false
 const MAX_YEAR = 2030
 
 const els = {
+  app: document.querySelector(".app"),
   calendar: document.querySelector(".calendar"),
+  pageLoader: document.getElementById("pageLoader"),
   month: document.getElementById("label-month"),
   year: document.getElementById("label-year"),
   grid: document.getElementById("grid"),
@@ -1138,7 +1148,7 @@ function populateVenueSelector() {
 }
 
 // Initial render
-loadEvents() // Load events from API first
+loadEvents(true) // Load events from API first
 updateNavigationButtons()
 
 // Populate year selector and add change event
