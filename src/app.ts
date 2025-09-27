@@ -18,14 +18,14 @@ export default app
 // Middleware
 app.use(express.json())
 
-// Use project root as base to resolve assets when running on Vercel
-app.use(express.static(FileSystemUtils.getPublicPath()))
+// Serve assets at /assets route to match deployment paths
+app.use("/assets", express.static(FileSystemUtils.getPublicPath()))
 
 // API Routes - Protected with authentication
 app.use("/api/events", authMiddleware, eventsRouter)
 
 // Serve the login page
-app.get("/login", (req, res) => {
+app.get("/login", (_, res) => {
   // Always serve login page - let frontend handle auth state
   const htmlPath = path.join(FileSystemUtils.getPublicPath(), "login.html")
   res.sendFile(htmlPath)
@@ -53,7 +53,7 @@ app.get("/events", async (req, res) => {
 })
 
 // Default route - redirect to events (frontend will handle auth)
-app.get("/", (req, res) => {
+app.get("/", (_, res) => {
   res.redirect("/events")
 })
 

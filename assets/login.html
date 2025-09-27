@@ -153,64 +153,42 @@
         } catch (error) {
           console.error("Login error:", error)
 
-          // Handle specific Firebase errors with detailed explanations
-          let errorMsg = "An error occurred during login"
-          let errorDetails = ""
+          // Handle Firebase errors with simple messages
+          let errorMsg = "Login failed. Please try again"
 
           switch (error.code) {
             case "auth/user-not-found":
-              errorMsg = "Account Not Found"
-              errorDetails =
-                "No account exists with this email address. Please check your email or contact an administrator to create your account."
+              errorMsg = "No account found with this email"
               break
             case "auth/wrong-password":
-              errorMsg = "Incorrect Password"
-              errorDetails =
-                "The password you entered is incorrect. Please try again or contact support if you've forgotten your password."
+              errorMsg = "Incorrect password"
+              break
+            case "auth/invalid-credential":
+              errorMsg = "Invalid email or password"
               break
             case "auth/invalid-email":
-              errorMsg = "Invalid Email Format"
-              errorDetails =
-                "Please enter a valid email address (e.g., user@example.com)."
+              errorMsg = "Invalid email address"
               break
             case "auth/user-disabled":
-              errorMsg = "Account Disabled"
-              errorDetails =
-                "This account has been temporarily disabled. Please contact your administrator for assistance."
+              errorMsg = "Account disabled"
               break
             case "auth/too-many-requests":
-              errorMsg = "Too Many Login Attempts"
-              errorDetails =
-                "Multiple failed login attempts detected. Please wait a few minutes before trying again."
+              errorMsg = "Too many attempts. Try again later"
               break
             case "auth/network-request-failed":
-              errorMsg = "Network Connection Error"
-              errorDetails =
-                "Unable to connect to the authentication server. Please check your internet connection and try again."
+              errorMsg = "Connection error. Check your internet"
               break
             case "auth/api-key-not-valid":
-              errorMsg = "Configuration Error"
-              errorDetails =
-                "There's a problem with the app configuration. Please contact technical support."
-              break
             case "auth/app-deleted":
-              errorMsg = "Service Unavailable"
-              errorDetails =
-                "The authentication service is currently unavailable. Please try again later or contact support."
-              break
             case "auth/invalid-api-key":
-              errorMsg = "Authentication Service Error"
-              errorDetails =
-                "There's a problem with the authentication service. Please contact technical support."
+              errorMsg = "Service error. Contact support"
               break
             default:
-              errorMsg = "Login Failed"
-              errorDetails =
-                error.message ||
-                "An unexpected error occurred. Please try again or contact support if the problem persists."
+              // For any unhandled errors, show the actual Firebase error message if available
+              errorMsg = error.message || "Login failed. Please try again"
           }
 
-          showError(`${errorMsg}: ${errorDetails}`)
+          showError(errorMsg)
         } finally {
           setLoading(false)
         }

@@ -656,11 +656,27 @@ textarea {
   border-top-color: rgba(0, 0, 0, 0.6);
 }
 
+.login-button.loading {
+  color: transparent !important;
+  position: relative;
+  background: rgba(0, 0, 0, 0.7) !important;
+}
+
 .login-button.loading::after {
-  border-color: rgba(255, 255, 255, 0.4);
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
   border-top-color: #ffffff;
-  width: 16px;
-  height: 16px;
+  border-right-color: #ffffff;
+  animation: spin 0.6s linear infinite;
+  z-index: 10;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 .calendar.loading::after {
   width: 30px;
