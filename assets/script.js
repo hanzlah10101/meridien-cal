@@ -26,7 +26,7 @@ const getMealTypeFromStart = (startDateOrString) => {
     } else if (hour >= 12 && hour < 18) {
       return "lunch"
     } else {
-      return "dinner"  // 18-23 or 0-5
+      return "dinner" // 18-23 or 0-5
     }
     return undefined
   } catch (error) {
@@ -375,6 +375,7 @@ function showMonthEventsList(monthEvents) {
   const headerRow = document.createElement("tr")
 
   const headers = [
+    { text: "No.", class: "count-col" },
     { text: "Date", class: "date-col" },
     { text: "Type", class: "type-col" },
     { text: "Guest Name", class: "guest-col" },
@@ -400,6 +401,12 @@ function showMonthEventsList(monthEvents) {
 
   monthEvents.forEach((event, index) => {
     const row = document.createElement("tr")
+
+    // Count column (row number)
+    const countCell = document.createElement("td")
+    countCell.className = "count-col"
+    countCell.textContent = index + 1
+    row.appendChild(countCell)
 
     // Date column
     const dateCell = document.createElement("td")
@@ -515,7 +522,9 @@ function showMonthEventsList(monthEvents) {
       let mealType = event.mealType || getMealTypeFromStart(event.start)
 
       if (mealType) {
-        mealBadge = `<span class="meal-badge ${mealType}">${mealType.charAt(0).toUpperCase() + mealType.slice(1)}</span>`
+        mealBadge = `<span class="meal-badge ${mealType}">${
+          mealType.charAt(0).toUpperCase() + mealType.slice(1)
+        }</span>`
       }
     } else if (event.start) {
       const startTime = new Date(event.start)
@@ -651,7 +660,9 @@ function showEventsList(list) {
     let mealType = event.mealType || getMealTypeFromStart(event.start)
 
     if (mealType) {
-      titleHTML += ` <span class="meal-badge ${mealType}">${mealType.charAt(0).toUpperCase() + mealType.slice(1)}</span>`
+      titleHTML += ` <span class="meal-badge ${mealType}">${
+        mealType.charAt(0).toUpperCase() + mealType.slice(1)
+      }</span>`
     }
 
     title.innerHTML = titleHTML
@@ -732,9 +743,9 @@ function editEvent(index) {
 
   if (event.start) {
     const s = new Date(event.start)
-    els.evStartDate.value = `${s.getFullYear()}-${pad(
-      s.getMonth() + 1
-    )}-${pad(s.getDate())}`
+    els.evStartDate.value = `${s.getFullYear()}-${pad(s.getMonth() + 1)}-${pad(
+      s.getDate()
+    )}`
     els.evStartTime.value = `${pad(s.getHours())}:${pad(s.getMinutes())}`
   } else {
     els.evStartDate.value = selectedKey || ""
