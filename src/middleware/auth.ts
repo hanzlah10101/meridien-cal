@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express"
 import { getAuth } from "firebase-admin/auth"
-import { getFirebaseDb } from "@/utils/firebase"
+import { getFirebaseDb } from "../utils/firebase"
 
 function initializeFirebaseAuth() {
   getFirebaseDb()
