@@ -40,6 +40,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.app.loaded {
+  opacity: 1;
+  visibility: visible;
 }
 .bar {
   display: flex;
@@ -131,6 +138,19 @@ body {
   font-weight: 700;
 }
 
+.btn:disabled {
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn:disabled:hover {
+  transform: none;
+}
+
+.btn:disabled:not(.loading) {
+  opacity: 0.5;
+}
+
 .calendar {
   background: #0b1220;
   border: 1px solid #1f2937;
@@ -173,7 +193,7 @@ body {
 }
 .cell.faded {
   opacity: 0.35;
-  color: #aaa;
+  color: aaa;
 }
 .cell.today {
   border-color: var(--accent);
@@ -332,7 +352,7 @@ select {
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-2);
 }
 textarea {
   min-height: 70px;
@@ -477,6 +497,13 @@ textarea {
 .events-table tr:hover {
   background: rgba(255, 255, 255, 0.02);
 }
+.events-table .count-col {
+  width: 50px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--accent);
+}
 .events-table .date-col {
   white-space: nowrap;
   width: 120px;
@@ -585,7 +612,7 @@ textarea {
 
 /* Loading states */
 .loading {
-  opacity: 0.6;
+  opacity: 0.7;
   pointer-events: none;
   position: relative;
 }
@@ -597,24 +624,43 @@ textarea {
   transform: translate(-50%, -50%);
   width: 20px;
   height: 20px;
-  border: 2px solid var(--muted);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  border-top-color: var(--accent);
-  animation: spin 1s linear infinite;
+  border-top-color: rgba(255, 255, 255, 0.8);
+  animation: spin 0.8s linear infinite;
   z-index: 10;
 }
 .btn.loading {
-  color: transparent;
+  color: transparent !important;
+  cursor: not-allowed;
 }
 .btn.loading::after {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-width: 2px;
 }
 @keyframes spin {
   to {
     transform: translate(-50%, -50%) rotate(360deg);
   }
+}
+
+/* Specific loading styles for different button types */
+.btn.accent.loading::after {
+  border-color: rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+}
+
+.btn.secondary.loading::after {
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 0, 0, 0.6);
+}
+
+.login-button.loading::after {
+  border-color: rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  width: 16px;
+  height: 16px;
 }
 .calendar.loading::after {
   width: 30px;
@@ -625,6 +671,56 @@ textarea {
   width: 25px;
   height: 25px;
   border-width: 2px;
+}
+
+/* Full Page Loader */
+.page-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.page-loader.hide {
+  opacity: 0;
+  visibility: hidden;
+}
+.page-loader .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(148, 163, 184, 0.3);
+  border-top: 3px solid var(--accent);
+  border-radius: 50%;
+  animation: page-spin 1s linear infinite;
+}
+@keyframes page-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Simple existing spinners */
+.loading::after {
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  border-top: 2px solid var(--accent);
+}
+.btn.loading::after {
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  border-top: 2px solid var(--accent);
+}
+.calendar.loading::after {
+  border: 3px solid rgba(148, 163, 184, 0.3);
+  border-top: 3px solid var(--accent);
 }
 
 @media (min-height: 900px) {
@@ -654,5 +750,140 @@ textarea {
   }
   .datetime-inputs input[type="date"] {
     grid-column: 1 / -1;
+  }
+}
+
+/* Login Page Styles */
+.login-container {
+  width: 100%;
+  max-width: 480px;
+  padding: 20px;
+}
+
+.login-card {
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  border-radius: var(--radius);
+  padding: 40px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.025em;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+  font-weight: 500;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+.form-group input {
+  padding: 16px 20px;
+  font-size: 15px;
+  border-radius: 14px;
+  border: 1px solid #263247;
+  background: #0f172a;
+  color: var(--text);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.form-group input::placeholder {
+  color: var(--muted);
+}
+
+.login-button {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #000;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.login-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+.login-button:disabled {
+  cursor: not-allowed;
+  transform: none;
+}
+
+.login-button:disabled:not(.loading) {
+  opacity: 0.5;
+}
+
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+/* Login responsive styles */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 16px;
+  }
+
+  .login-card {
+    padding: 24px 20px;
+  }
+
+  .login-title {
+    font-size: 24px;
   }
 }

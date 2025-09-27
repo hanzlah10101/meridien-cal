@@ -6,6 +6,7 @@ import dotenv from "dotenv"
 import path from "path"
 import { eventsRouter } from "./routes/events"
 import { FileSystemUtils } from "./utils/file-system"
+import { authMiddleware, checkAuthStatus } from "./middleware/auth"
 
 // Load env vars in local/dev
 dotenv.config()
@@ -20,13 +21,40 @@ app.use(express.json())
 // Use project root as base to resolve assets when running on Vercel
 app.use(express.static(FileSystemUtils.getPublicPath()))
 
-// API Routes
-app.use("/api/events", eventsRouter)
+// API Routes - Protected with authentication
+app.use("/api/events", authMiddleware, eventsRouter)
 
-// Serve the main HTML file
-app.get("/", (req, res) => {
-  const htmlPath = path.join(FileSystemUtils.getPublicPath(), "events.html")
+// Serve the login page
+app.get("/login", (req, res) => {
+  // Always serve login page - let frontend handle auth state
+  const htmlPath = path.join(FileSystemUtils.getPublicPath(), "login.html")
   res.sendFile(htmlPath)
+})
+
+// Serve the events calendar (protected route)
+app.get("/events", async (req, res) => {
+  try {
+    const isAuthenticated = await checkAuthStatus(req)
+
+    if (!isAuthenticated) {
+      // User is not authenticated, redirect to login
+      res.redirect("/login")
+      return
+    }
+
+    // User is authenticated, serve the events calendar
+    const htmlPath = path.join(FileSystemUtils.getPublicPath(), "events.html")
+    res.sendFile(htmlPath)
+  } catch (error) {
+    console.error("Error checking auth status:", error)
+    // On error, redirect to login
+    res.redirect("/login")
+  }
+})
+
+// Default route - redirect to events (frontend will handle auth)
+app.get("/", (req, res) => {
+  res.redirect("/events")
 })
 
 // Only start a server when running locally. On Vercel, this file is imported by an API route.

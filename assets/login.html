@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>Login - Meridien Calendar</title>
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <h1 class="login-title">Welcome Back</h1>
+          <p class="login-subtitle">Sign in to access your calendar</p>
+        </div>
+
+        <form class="login-form" id="loginForm">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Enter your email"
+              required
+              autocomplete="email"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Enter your password"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+
+          <button type="submit" class="login-button btn" id="loginButton">
+            Sign In
+          </button>
+        </form>
+
+        <!-- Error message display -->
+        <div
+          class="error-message"
+          id="errorMessage"
+          style="display: none"
+        ></div>
+      </div>
+    </div>
+
+    <script>
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDAaZo9T9CVa2yTC-t6_WL4Ljy-Uce_IeE",
+        authDomain: "meridien-cal.firebaseapp.com",
+        databaseURL:
+          "https://meridien-cal-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "meridien-cal",
+        storageBucket: "meridien-cal.firebasestorage.app",
+        messagingSenderId: "872918390831",
+        appId: "1:872918390831:web:f262c134a3f14ee50d0eda",
+        measurementId: "G-TQ3SDN7CF6"
+      }
+
+      // Initialize Firebase with error handling
+      try {
+        firebase.initializeApp(firebaseConfig)
+      } catch (error) {
+        console.error("Firebase initialization error:", error)
+        showError("Firebase configuration error. Please contact support.")
+      }
+      const auth = firebase.auth()
+
+      // DOM elements
+      const loginForm = document.getElementById("loginForm")
+      const emailInput = document.getElementById("email")
+      const passwordInput = document.getElementById("password")
+      const loginButton = document.getElementById("loginButton")
+      const errorMessage = document.getElementById("errorMessage")
+
+      // Helper function to set secure cookie
+      function setAuthCookie(token) {
+        document.cookie = `firebaseToken=${encodeURIComponent(
+          token
+        )}; path=/; max-age=3600; samesite=strict`
+        localStorage.setItem("firebaseToken", token)
+      }
+
+      // Check if user is already logged in
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          try {
+            // Get the ID token to verify authentication is working
+            const idToken = await user.getIdToken()
+            setAuthCookie(idToken)
+
+            // Add a small delay to prevent rapid redirects
+            setTimeout(() => {
+              window.location.href = "/events"
+            }, 100)
+          } catch (error) {
+            console.error("Error getting auth token:", error)
+            // If there's an error getting the token, stay on login page
+            showError("Authentication error. Please try logging in again.")
+          }
+        }
+      })
+
+      // Login form submission
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault()
+
+        const email = emailInput.value.trim()
+        const password = passwordInput.value
+
+        if (!email || !password) {
+          showError("Please fill in all fields")
+          return
+        }
+
+        // Show loading state
+        setLoading(true)
+        hideError()
+
+        try {
+          // Sign in with Firebase
+          const userCredential = await auth.signInWithEmailAndPassword(
+            email,
+            password
+          )
+          const user = userCredential.user
+
+          // Get the ID token to send to backend
+          const idToken = await user.getIdToken()
+
+          // Store token in both localStorage and cookie
+          setAuthCookie(idToken)
+
+          // Redirect to events page
+          window.location.href = "/events"
+        } catch (error) {
+          console.error("Login error:", error)
+
+          // Handle specific Firebase errors with detailed explanations
+          let errorMsg = "An error occurred during login"
+          let errorDetails = ""
+
+          switch (error.code) {
+            case "auth/user-not-found":
+              errorMsg = "Account Not Found"
+              errorDetails =
+                "No account exists with this email address. Please check your email or contact an administrator to create your account."
+              break
+            case "auth/wrong-password":
+              errorMsg = "Incorrect Password"
+              errorDetails =
+                "The password you entered is incorrect. Please try again or contact support if you've forgotten your password."
+              break
+            case "auth/invalid-email":
+              errorMsg = "Invalid Email Format"
+              errorDetails =
+                "Please enter a valid email address (e.g., user@example.com)."
+              break
+            case "auth/user-disabled":
+              errorMsg = "Account Disabled"
+              errorDetails =
+                "This account has been temporarily disabled. Please contact your administrator for assistance."
+              break
+            case "auth/too-many-requests":
+              errorMsg = "Too Many Login Attempts"
+              errorDetails =
+                "Multiple failed login attempts detected. Please wait a few minutes before trying again."
+              break
+            case "auth/network-request-failed":
+              errorMsg = "Network Connection Error"
+              errorDetails =
+                "Unable to connect to the authentication server. Please check your internet connection and try again."
+              break
+            case "auth/api-key-not-valid":
+              errorMsg = "Configuration Error"
+              errorDetails =
+                "There's a problem with the app configuration. Please contact technical support."
+              break
+            case "auth/app-deleted":
+              errorMsg = "Service Unavailable"
+              errorDetails =
+                "The authentication service is currently unavailable. Please try again later or contact support."
+              break
+            case "auth/invalid-api-key":
+              errorMsg = "Authentication Service Error"
+              errorDetails =
+                "There's a problem with the authentication service. Please contact technical support."
+              break
+            default:
+              errorMsg = "Login Failed"
+              errorDetails =
+                error.message ||
+                "An unexpected error occurred. Please try again or contact support if the problem persists."
+          }
+
+          showError(`${errorMsg}: ${errorDetails}`)
+        } finally {
+          setLoading(false)
+        }
+      })
+
+      // Helper functions
+      function setLoading(loading) {
+        if (loading) {
+          loginButton.disabled = true
+          loginButton.classList.add("loading")
+        } else {
+          loginButton.disabled = false
+          loginButton.classList.remove("loading")
+        }
+      }
+
+      function showError(message) {
+        errorMessage.textContent = message
+        errorMessage.style.display = "block"
+      }
+
+      function hideError() {
+        errorMessage.style.display = "none"
+      }
+    </script>
+  </body>
+</html>

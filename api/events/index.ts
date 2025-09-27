@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
 import { EventsService } from "../../src/api/events-service"
+import { checkAuthStatus } from "../../src/middleware/auth"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
@@ -17,6 +18,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === "OPTIONS") {
     res.status(200).end()
     return
+  }
+
+  // Check authentication for all API requests
+  try {
+    const isAuthenticated = await checkAuthStatus(req as any)
+    if (!isAuthenticated) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized: Authentication required"
+      })
+    }
+  } catch (authError) {
+    return res.status(401).json({
+      success: false,
+      error: "Unauthorized: Invalid authentication"
+    })
   }
 
   try {

@@ -4,16 +4,28 @@
     "api/**/*": {
       "memory": 256,
       "maxDuration": 10,
-      "includeFiles": "{assets/**/*}"
+      "includeFiles": "assets/**/*"
     }
   },
   "buildCommand": "pnpm build",
   "outputDirectory": "",
-  "redirects": [
+  "public": true,
+  "rewrites": [
     {
       "source": "/",
-      "destination": "/assets/events.html",
-      "permanent": false
+      "destination": "/api/index"
+    },
+    {
+      "source": "/events",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/login",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
     }
   ]
 }

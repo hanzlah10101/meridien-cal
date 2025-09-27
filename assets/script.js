@@ -1,3 +1,67 @@
+// Firebase configuration - you'll need to replace this with your actual config
+const firebaseConfig = {
+  apiKey: "AIzaSyDAaZo9T9CVa2yTC-t6_WL4Ljy-Uce_IeE",
+  authDomain: "meridien-cal.firebaseapp.com",
+  databaseURL:
+    "https://meridien-cal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "meridien-cal",
+  storageBucket: "meridien-cal.firebasestorage.app",
+  messagingSenderId: "872918390831",
+  appId: "1:872918390831:web:f262c134a3f14ee50d0eda",
+  measurementId: "G-TQ3SDN7CF6"
+}
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig)
+const auth = firebase.auth()
+
+// Helper function to set secure cookie
+function setAuthCookie(token) {
+  document.cookie = `firebaseToken=${encodeURIComponent(
+    token
+  )}; path=/; max-age=3600; samesite=strict`
+  localStorage.setItem("firebaseToken", token)
+}
+
+// Helper function to clear auth data
+function clearAuthData() {
+  document.cookie =
+    "firebaseToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;"
+  localStorage.removeItem("firebaseToken")
+}
+
+// Check authentication state and refresh token
+let authCheckComplete = false
+auth.onAuthStateChanged(async (user) => {
+  // Prevent rapid redirects
+  if (authCheckComplete) return
+
+  if (user) {
+    try {
+      // Get fresh token and store it
+      const token = await user.getIdToken(true)
+      setAuthCookie(token)
+      authCheckComplete = true
+      console.log("User authenticated successfully")
+    } catch (error) {
+      console.error("Error refreshing token:", error)
+      clearAuthData()
+      authCheckComplete = true
+      setTimeout(() => {
+        window.location.href = "/login"
+      }, 500)
+    }
+  } else {
+    // User is not authenticated
+    console.log("User not authenticated, redirecting to login")
+    clearAuthData()
+    authCheckComplete = true
+    setTimeout(() => {
+      window.location.href = "/login"
+    }, 500)
+  }
+})
+
 // Initialize Day.js plugins
 dayjs.extend(dayjs_plugin_relativeTime)
 dayjs.extend(dayjs_plugin_localizedFormat)
@@ -59,13 +123,31 @@ let events = {}
 // API helpers
 async function apiCall(url, options = {}) {
   try {
+    // Get Firebase token from localStorage
+    const token = localStorage.getItem("firebaseToken")
+
+    const headers = {
+      "Content-Type": "application/json",
+      ...options.headers
+    }
+
+    // Add Authorization header if token exists
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
     const response = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers
-      },
+      headers,
       ...options
     })
+    // Check if response is unauthorized
+    if (response.status === 401) {
+      // Token expired or invalid, redirect to login
+      localStorage.removeItem("firebaseToken")
+      window.location.href = "/login"
+      return
+    }
+
     const data = await response.json()
 
     if (!data.success) {
@@ -75,14 +157,25 @@ async function apiCall(url, options = {}) {
     return data
   } catch (error) {
     console.error("API Error:", error)
+
+    // Handle network errors that might indicate auth issues
+    if (
+      error.message.includes("401") ||
+      error.message.includes("Unauthorized")
+    ) {
+      localStorage.removeItem("firebaseToken")
+      window.location.href = "/login"
+      return
+    }
+
     throw error
   }
 }
 
 // Load all events from server
-async function loadEvents(isInitialLoad = false) {
+async function loadEvents(isInitialLoad = false, showLoader = true) {
   try {
-    if (!isInitialLoad) {
+    if (!isInitialLoad && showLoader) {
       els.pageLoader.classList.remove("hide")
     }
     const response = await apiCall("/api/events")
@@ -98,7 +191,7 @@ async function loadEvents(isInitialLoad = false) {
       // Show app and hide loader on initial load
       els.app.classList.add("loaded")
       els.pageLoader.classList.add("hide")
-    } else {
+    } else if (showLoader) {
       els.pageLoader.classList.add("hide")
     }
   }
@@ -107,17 +200,35 @@ async function loadEvents(isInitialLoad = false) {
 // Create new event
 async function createEvent(dateKey, eventData) {
   try {
+    // Optimistic update: add to local state immediately
+    if (!events[dateKey]) {
+      events[dateKey] = []
+    }
+
+    // Create a temporary ID for optimistic update
+    const tempId = "temp_" + Date.now()
+    const optimisticEvent = { ...eventData, id: tempId }
+    events[dateKey].push(optimisticEvent)
+    render()
+
     const response = await apiCall("/api/events", {
       method: "POST",
       body: JSON.stringify({ dateKey, event: eventData })
     })
 
-    // Always reload from API to keep in sync
-    await loadEvents()
+    // Update with real ID from server
+    const realEvent = response.data
+    const tempIndex = events[dateKey].findIndex((e) => e.id === tempId)
+    if (tempIndex !== -1) {
+      events[dateKey][tempIndex] = realEvent
+      render()
+    }
 
     return response.data
   } catch (error) {
     console.error("Failed to create event:", error)
+    // Rollback optimistic update on error (no full page loader)
+    await loadEvents(false, false)
     throw error
   }
 }
@@ -125,17 +236,33 @@ async function createEvent(dateKey, eventData) {
 // Update existing event
 async function updateEvent(dateKey, eventId, eventData) {
   try {
+    // Optimistic update: update local state immediately
+    const dateEvents = events[dateKey]
+    const eventIndex = dateEvents?.findIndex((e) => e.id === eventId)
+    const originalEvent =
+      eventIndex !== -1 ? { ...dateEvents[eventIndex] } : null
+
+    if (eventIndex !== -1) {
+      events[dateKey][eventIndex] = { ...eventData, id: eventId }
+      render()
+    }
+
     const response = await apiCall(`/api/events/${dateKey}/${eventId}`, {
       method: "PUT",
       body: JSON.stringify(eventData)
     })
 
-    // Reload from API; avoid mutating possibly stale local array
-    await loadEvents()
+    // Update with server response
+    if (eventIndex !== -1) {
+      events[dateKey][eventIndex] = response.data
+      render()
+    }
 
     return response.data
   } catch (error) {
     console.error("Failed to update event:", error)
+    // Rollback optimistic update on error (no full page loader)
+    await loadEvents(false, false)
     throw error
   }
 }
@@ -143,16 +270,30 @@ async function updateEvent(dateKey, eventId, eventData) {
 // Delete event
 async function deleteEventAPI(dateKey, eventId) {
   try {
+    // Optimistic update: remove from local state immediately
+    const dateEvents = events[dateKey]
+    const eventIndex = dateEvents?.findIndex((e) => e.id === eventId)
+    const deletedEvent =
+      eventIndex !== -1 ? { ...dateEvents[eventIndex] } : null
+
+    if (eventIndex !== -1) {
+      events[dateKey].splice(eventIndex, 1)
+      render()
+    }
+
     await apiCall(`/api/events/${dateKey}/${eventId}`, {
       method: "DELETE"
     })
 
-    // Reload from API to reflect deletion
-    await loadEvents()
-
     return true
   } catch (error) {
     console.error("Failed to delete event:", error)
+    // Rollback optimistic update on error - restore deleted event
+    if (deletedEvent && eventIndex !== -1) {
+      if (!events[dateKey]) events[dateKey] = []
+      events[dateKey].splice(eventIndex, 0, deletedEvent)
+      render()
+    }
     throw error
   }
 }
@@ -175,6 +316,7 @@ const els = {
   prev: document.getElementById("prev"),
   next: document.getElementById("next"),
   todayBtn: document.getElementById("today"),
+  logoutBtn: document.getElementById("logout"),
   addQuick: document.getElementById("addQuick"),
   toggleHijri: document.getElementById("toggle-hijri"),
   sheet: document.getElementById("sheet"),
@@ -790,8 +932,8 @@ async function deleteEvent(index) {
   const event = list[index]
 
   if (!event.id) {
-    // No local delete without ID; refresh from server to reconcile
-    await loadEvents()
+    // No local delete without ID; refresh from server to reconcile (no full page loader)
+    await loadEvents(false, false)
     const refreshed = events[selectedKey] || []
     if (refreshed.length > 0) {
       showEventsList(refreshed)
@@ -878,6 +1020,18 @@ els.todayBtn.addEventListener("click", () => {
   render()
   updateNavigationButtons()
 })
+els.logoutBtn.addEventListener("click", async () => {
+  try {
+    await auth.signOut()
+    clearAuthData()
+    window.location.href = "/login"
+  } catch (error) {
+    console.error("Logout error:", error)
+    // Force logout even if there's an error
+    clearAuthData()
+    window.location.href = "/login"
+  }
+})
 els.addQuick.addEventListener("click", () => {
   openSheetForDate(toKey(today))
 })
@@ -940,16 +1094,13 @@ els.eventForm.addEventListener("submit", async (e) => {
       await createEvent(selectedKey, entry)
     }
 
-    await loadEvents()
-
+    // No need to call loadEvents() - optimistic updates handle the UI
     if (selectedKey) {
       const list = events[selectedKey] || []
       showEventsList(list)
       els.addEventBtn.style.display = "block"
       els.eventForm.style.display = "none"
     }
-
-    render()
   } catch (error) {
     alert("Failed to save event. Please try again.")
   } finally {
