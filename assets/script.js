@@ -533,6 +533,7 @@ function showMonthEventsList(monthEvents) {
     { text: "Guest Name", class: "guest-col" },
     { text: "Pax", class: "pax-col" },
     { text: "Venue", class: "venue-col" },
+    { text: "Notes", class: "notes-col" },
     { text: "W/Food", class: "food-col" },
     { text: "Time", class: "time-col" },
     { text: "Actions", class: "actions-col" }
@@ -602,13 +603,18 @@ function showMonthEventsList(monthEvents) {
     // Type column
     const typeCell = document.createElement("td")
     typeCell.className = "type-col"
-    if (event.type === "reservation") {
+    const eventType = event.type || "booking" // Default to booking if type is not present
+    if (eventType === "reservation") {
       const reservationBadge = document.createElement("span")
       reservationBadge.className = "reservation-badge"
       reservationBadge.textContent = "RES"
       typeCell.appendChild(reservationBadge)
     } else {
-      typeCell.textContent = "-"
+      // Default to booking badge for "booking" or any other/missing type
+      const bookingBadge = document.createElement("span")
+      bookingBadge.className = "booking-badge"
+      bookingBadge.textContent = "BKG"
+      typeCell.appendChild(bookingBadge)
     }
     row.appendChild(typeCell)
 
@@ -629,6 +635,16 @@ function showMonthEventsList(monthEvents) {
     venueCell.className = "venue-col"
     venueCell.textContent = event.venue || "-"
     row.appendChild(venueCell)
+
+    // Notes column
+    const notesCell = document.createElement("td")
+    notesCell.className = "notes-col"
+    if (event.notes) {
+      notesCell.innerHTML = event.notes.replace(/\n/g, '<br>').replace(/\s/g, '&nbsp;')
+    } else {
+      notesCell.textContent = "-"
+    }
+    row.appendChild(notesCell)
 
     // With Food column
     const foodCell = document.createElement("td")
@@ -801,10 +817,14 @@ function showEventsList(list) {
     const title = document.createElement("div")
     title.className = "title"
 
-    // Add reservation badge to title if it's a reservation
+    // Add reservation/booking badge to title
     let titleHTML = ""
-    if (event.type === "reservation") {
+    const eventType = event.type || "booking" // Default to booking if type is not present
+    if (eventType === "reservation") {
       titleHTML += `<span class="reservation-badge">Reservation</span> `
+    } else {
+      // Default to booking badge for "booking" or any other/missing type
+      titleHTML += `<span class="booking-badge">Booking</span> `
     }
     titleHTML += event.title
 
@@ -823,7 +843,12 @@ function showEventsList(list) {
     details.className = "details"
 
     let detailsText = ""
-    if (event.type === "reservation") detailsText += `🔴 Reservation\n`
+    const detailEventType = event.type || "booking" // Default to booking if type is not present
+    if (detailEventType === "reservation") {
+      detailsText += `🔴 Reservation\n`
+    } else {
+      detailsText += `🟢 Booking\n`
+    }
     if (event.venue) detailsText += `📍 ${event.venue}\n`
     if (event.guestName) detailsText += `👤 ${event.guestName}\n`
     if (event.phone) detailsText += `📞 ${event.phone}\n`
@@ -850,11 +875,13 @@ function showEventsList(list) {
       detailsText += `🕐 End: ${formatDateTime(event.end)}\n`
     }
 
-    details.textContent = detailsText.trim() || "No additional details"
+    details.innerHTML = detailsText.trim().replace(/\n/g, '<br>') || "No additional details"
 
     const notes = document.createElement("div")
     notes.className = "notes"
-    notes.textContent = event.notes ? `"${event.notes}"` : ""
+    if (event.notes) {
+      notes.innerHTML = `"${event.notes.replace(/\n/g, '<br>').replace(/\s/g, '&nbsp;')}"`
+    }
 
     const actions = document.createElement("div")
     actions.className = "actions"
