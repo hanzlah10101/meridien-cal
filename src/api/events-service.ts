@@ -16,6 +16,8 @@ export interface Event {
   withFood?: boolean
   mealType?: string
   type?: string
+  meal?: string
+  mealItems?: string
 }
 
 export type EventsData = Record<string, Event[]>

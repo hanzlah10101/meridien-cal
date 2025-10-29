@@ -164,6 +164,23 @@
               With Food
             </label>
           </div>
+          <div class="row meal-fields" id="meal-fields" style="display: none">
+            <label for="ev-meal">Meal</label>
+            <select id="ev-meal">
+              <option value="">Select a meal...</option>
+              <option value="chicken-qorma">Chicken Qorma</option>
+              <option value="mutton-qorma">Mutton Qorma</option>
+            </select>
+          </div>
+          <div class="row meal-fields" id="meal-items-field" style="display: none">
+            <label for="ev-meal-items">Meal Items</label>
+            <textarea 
+              id="ev-meal-items" 
+              placeholder="Meal items will appear here..." 
+              readonly
+              style="background-color: var(--bg-secondary); min-height: 120px;"
+            ></textarea>
+          </div>
           <div class="actions">
             <button type="button" class="btn secondary" id="cancel">
               Cancel

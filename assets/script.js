@@ -120,6 +120,22 @@ try {
 // In-memory cache (always refreshed from API)
 let events = {}
 
+// Meal definitions
+const mealItems = {
+  "chicken-qorma": `Chicken Qorma
+Vegetable pulao
+One type of sweet
+1 type of salad
+Variety of Naan
+Riata`,
+  "mutton-qorma": `Mutton Qorma
+Vegetable pulao
+One type of sweet
+1 type of salad
+Variety of Naan
+Riata`
+}
+
 // API helpers
 async function apiCall(url, options = {}) {
   try {
@@ -336,6 +352,9 @@ const els = {
   evPax: document.getElementById("ev-pax"),
   evVenue: document.getElementById("ev-venue"),
   evWithFood: document.getElementById("ev-with-food"),
+  evMeal: document.getElementById("ev-meal"),
+  evMealItems: document.getElementById("ev-meal-items"),
+  mealFields: document.querySelectorAll(".meal-fields"),
   save: document.getElementById("save"),
   cancel: document.getElementById("cancel")
 }
@@ -534,6 +553,7 @@ function showMonthEventsList(monthEvents) {
     { text: "Pax", class: "pax-col" },
     { text: "Venue", class: "venue-col" },
     { text: "Notes", class: "notes-col" },
+    { text: "Meal", class: "meal-col" },
     { text: "W/Food", class: "food-col" },
     { text: "Time", class: "time-col" },
     { text: "Actions", class: "actions-col" }
@@ -645,6 +665,18 @@ function showMonthEventsList(monthEvents) {
       notesCell.textContent = "-"
     }
     row.appendChild(notesCell)
+
+    // Meal column
+    const mealCell = document.createElement("td")
+    mealCell.className = "meal-col"
+    if (event.withFood && event.meal) {
+      const mealName = event.meal === "chicken-qorma" ? "Chicken Qorma" : 
+                      event.meal === "mutton-qorma" ? "Mutton Qorma" : event.meal
+      mealCell.textContent = mealName
+    } else {
+      mealCell.textContent = "-"
+    }
+    row.appendChild(mealCell)
 
     // With Food column
     const foodCell = document.createElement("td")
@@ -855,6 +887,13 @@ function showEventsList(list) {
     if (event.pax) detailsText += `👥 ${event.pax} guests\n`
     detailsText += `🍽️ ${event.withFood ? "With Food" : "Without Food"}\n`
 
+    // Add meal info if available
+    if (event.withFood && event.meal) {
+      const mealName = event.meal === "chicken-qorma" ? "Chicken Qorma" : 
+                      event.meal === "mutton-qorma" ? "Mutton Qorma" : event.meal
+      detailsText += `🥘 ${mealName}\n`
+    }
+
     // Add meal type info
     if (event.mealType) {
       const mealText =
@@ -879,8 +918,20 @@ function showEventsList(list) {
 
     const notes = document.createElement("div")
     notes.className = "notes"
+    let notesContent = ""
+    
     if (event.notes) {
-      notes.innerHTML = `"${event.notes.replace(/\n/g, '<br>').replace(/\s/g, '&nbsp;')}"`
+      notesContent += `"${event.notes.replace(/\n/g, '<br>').replace(/\s/g, '&nbsp;')}"`
+    }
+    
+    // Add meal items if available
+    if (event.withFood && event.mealItems) {
+      if (notesContent) notesContent += "<br><br>"
+      notesContent += `<strong>Meal Items:</strong><br>${event.mealItems.replace(/\n/g, '<br>')}`
+    }
+    
+    if (notesContent) {
+      notes.innerHTML = notesContent
     }
 
     const actions = document.createElement("div")
@@ -898,7 +949,7 @@ function showEventsList(list) {
 
     content.appendChild(title)
     content.appendChild(details)
-    if (event.notes) content.appendChild(notes)
+    if (notesContent) content.appendChild(notes)
 
     actions.appendChild(editBtn)
     actions.appendChild(deleteBtn)
@@ -942,6 +993,16 @@ function editEvent(index) {
   els.evPax.value = event.pax || ""
   els.evVenue.value = event.venue || "Dar-ul-Khaas"
   els.evWithFood.checked = event.withFood || false
+  
+  // Handle meal fields
+  els.evMeal.value = event.meal || ""
+  els.evMealItems.value = event.mealItems || ""
+  
+  // Show/hide meal fields based on withFood state
+  const showMealFields = event.withFood || false
+  els.mealFields.forEach(field => {
+    field.style.display = showMealFields ? "block" : "none"
+  })
 
   els.eventsList.style.display = "none"
   els.addEventBtn.style.display = "none"
@@ -1019,8 +1080,15 @@ function clearForm() {
   els.evPax.value = ""
   els.evVenue.value = "Dar-ul-Khaas"
   els.evWithFood.checked = false
+  els.evMeal.value = ""
+  els.evMealItems.value = ""
   delete els.eventForm.dataset.editIndex
   delete els.eventForm.dataset.editEventId
+
+  // Hide meal fields by default
+  els.mealFields.forEach(field => {
+    field.style.display = "none"
+  })
 
   // Set default times for lunch
   els.evStartTime.value = "12:00"
@@ -1105,7 +1173,9 @@ els.eventForm.addEventListener("submit", async (e) => {
     venue: els.evVenue.value,
     withFood: els.evWithFood.checked,
     mealType: els.evMealType.value,
-    type: els.evType.value
+    type: els.evType.value,
+    meal: els.evMeal.value || "",
+    mealItems: els.evMealItems.value || ""
   }
 
   try {
@@ -1179,6 +1249,30 @@ els.evMealType.addEventListener("change", (e) => {
   } else if (mealType === "dinner") {
     els.evStartTime.value = "18:00"
     els.evEndTime.value = "22:00"
+  }
+})
+
+// With Food checkbox handler
+els.evWithFood.addEventListener("change", (e) => {
+  const showMealFields = e.target.checked
+  els.mealFields.forEach(field => {
+    field.style.display = showMealFields ? "block" : "none"
+  })
+  
+  // Clear meal selection when hiding fields
+  if (!showMealFields) {
+    els.evMeal.value = ""
+    els.evMealItems.value = ""
+  }
+})
+
+// Meal selection handler
+els.evMeal.addEventListener("change", (e) => {
+  const selectedMeal = e.target.value
+  if (selectedMeal && mealItems[selectedMeal]) {
+    els.evMealItems.value = mealItems[selectedMeal]
+  } else {
+    els.evMealItems.value = ""
   }
 })
 
