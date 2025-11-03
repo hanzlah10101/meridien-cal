@@ -120,20 +120,24 @@ try {
 // In-memory cache (always refreshed from API)
 let events = {}
 
-// Meal definitions
+// Meal definitions - now as arrays
 const mealItems = {
-  "chicken-qorma": `Chicken Qorma
-Vegetable pulao
-One type of sweet
-1 type of salad
-Variety of Naan
-Riata`,
-  "mutton-qorma": `Mutton Qorma
-Vegetable pulao
-One type of sweet
-1 type of salad
-Variety of Naan
-Riata`
+  "chicken-qorma": [
+    "Chicken Qorma",
+    "Vegetable pulao", 
+    "One type of sweet",
+    "1 type of salad",
+    "Variety of Naan",
+    "Riata"
+  ],
+  "mutton-qorma": [
+    "Mutton Qorma",
+    "Vegetable pulao",
+    "One type of sweet", 
+    "1 type of salad",
+    "Variety of Naan",
+    "Riata"
+  ]
 }
 
 // API helpers
@@ -243,6 +247,7 @@ async function createEvent(dateKey, eventData) {
     return response.data
   } catch (error) {
     console.error("Failed to create event:", error)
+    console.error("Create event error details:", error.message)
     // Rollback optimistic update on error (no full page loader)
     await loadEvents(false, false)
     throw error
@@ -277,6 +282,7 @@ async function updateEvent(dateKey, eventId, eventData) {
     return response.data
   } catch (error) {
     console.error("Failed to update event:", error)
+    console.error("Update event error details:", error.message)
     // Rollback optimistic update on error (no full page loader)
     await loadEvents(false, false)
     throw error
@@ -353,7 +359,10 @@ const els = {
   evVenue: document.getElementById("ev-venue"),
   evWithFood: document.getElementById("ev-with-food"),
   evMeal: document.getElementById("ev-meal"),
+  evMealTitle: document.getElementById("ev-meal-title"),
   evMealItems: document.getElementById("ev-meal-items"),
+  mealItemsContainer: document.getElementById("meal-items-container"),
+  addMealItemBtn: document.getElementById("add-meal-item"),
   mealFields: document.querySelectorAll(".meal-fields"),
   save: document.getElementById("save"),
   cancel: document.getElementById("cancel")
@@ -517,13 +526,13 @@ function openSheetForMonth() {
   if (monthEvents.length > 0) {
     showMonthEventsList(monthEvents)
     els.addEventBtn.style.display = "none"
-    els.eventForm.style.display = "none"
+    els.eventForm.classList.remove("show")
   } else {
     els.eventsList.innerHTML =
       '<div style="text-align: center; color: var(--muted); padding: 40px 20px; font-style: italic;">No events found for this month</div>'
     els.eventsList.style.display = "block"
     els.addEventBtn.style.display = "none"
-    els.eventForm.style.display = "none"
+    els.eventForm.classList.remove("show")
   }
 
   openDrawer()
@@ -554,6 +563,7 @@ function showMonthEventsList(monthEvents) {
     { text: "Venue", class: "venue-col" },
     { text: "Notes", class: "notes-col" },
     { text: "Meal", class: "meal-col" },
+    { text: "Meal Items", class: "meal-items-col" },
     { text: "W/Food", class: "food-col" },
     { text: "Time", class: "time-col" },
     { text: "Actions", class: "actions-col" }
@@ -571,6 +581,13 @@ function showMonthEventsList(monthEvents) {
 
   // Create body
   const tbody = document.createElement("tbody")
+
+  // Calculate total pax
+  let totalPax = 0
+  monthEvents.forEach((event) => {
+    const pax = parseInt(event.pax) || 0
+    totalPax += pax
+  })
 
   monthEvents.forEach((event, index) => {
     const row = document.createElement("tr")
@@ -592,27 +609,27 @@ function showMonthEventsList(monthEvents) {
 
       // Check if start and end dates are the same day
       if (startDate.toDateString() === endDate.toDateString()) {
-        dateText = startDate.toLocaleDateString("en-US", {
-          month: "2-digit",
+        dateText = startDate.toLocaleDateString("en-GB", {
           day: "2-digit",
+          month: "2-digit",
           year: "2-digit"
         })
       } else {
-        dateText = `${startDate.toLocaleDateString("en-US", {
-          month: "2-digit",
+        dateText = `${startDate.toLocaleDateString("en-GB", {
           day: "2-digit",
+          month: "2-digit",
           year: "2-digit"
-        })} - ${endDate.toLocaleDateString("en-US", {
-          month: "2-digit",
+        })} - ${endDate.toLocaleDateString("en-GB", {
           day: "2-digit",
+          month: "2-digit",
           year: "2-digit"
         })}`
       }
     } else {
       const eventDate = new Date(event.start || event.date)
-      dateText = eventDate.toLocaleDateString("en-US", {
-        month: "2-digit",
+      dateText = eventDate.toLocaleDateString("en-GB", {
         day: "2-digit",
+        month: "2-digit",
         year: "2-digit"
       })
     }
@@ -677,6 +694,31 @@ function showMonthEventsList(monthEvents) {
       mealCell.textContent = "-"
     }
     row.appendChild(mealCell)
+
+    // Meal Items column
+    const mealItemsCell = document.createElement("td")
+    mealItemsCell.className = "meal-items-col"
+    if (event.withFood && (event.mealTitle || event.mealItems)) {
+      let content = ""
+      
+      if (event.mealTitle) {
+        content += `<div class="meal-title"><strong>${event.mealTitle}</strong></div>`
+      }
+      
+      if (event.mealItems) {
+        const itemsList = Array.isArray(event.mealItems) 
+          ? event.mealItems.filter(item => item.trim())
+          : event.mealItems.split('\n').filter(item => item.trim())
+        if (itemsList.length > 0) {
+          content += `<div class="meal-items-list">${itemsList.join('<br>')}</div>`
+        }
+      }
+      
+      mealItemsCell.innerHTML = content
+    } else {
+      mealItemsCell.textContent = "-"
+    }
+    row.appendChild(mealItemsCell)
 
     // With Food column
     const foodCell = document.createElement("td")
@@ -796,6 +838,31 @@ function showMonthEventsList(monthEvents) {
     tbody.appendChild(row)
   })
 
+  // Add footer row with total pax
+  const footerRow = document.createElement("tr")
+  footerRow.className = "footer-row"
+
+  // Empty cells for columns before pax
+  for (let i = 0; i < 4; i++) {
+    const emptyCell = document.createElement("td")
+    emptyCell.innerHTML = i === 3 ? "<strong>Total:</strong>" : ""
+    footerRow.appendChild(emptyCell)
+  }
+
+  // Total pax cell
+  const totalPaxCell = document.createElement("td")
+  totalPaxCell.className = "pax-col total-pax"
+  totalPaxCell.innerHTML = `<strong>${totalPax}</strong>`
+  footerRow.appendChild(totalPaxCell)
+
+  // Empty cells for remaining columns
+  for (let i = 0; i < 7; i++) {
+    const emptyCell = document.createElement("td")
+    footerRow.appendChild(emptyCell)
+  }
+
+  tbody.appendChild(footerRow)
+
   table.appendChild(tbody)
   tableContainer.appendChild(table)
   els.eventsList.appendChild(tableContainer)
@@ -814,12 +881,12 @@ function openSheetForDate(key) {
   if (list.length > 0) {
     showEventsList(list)
     els.addEventBtn.style.display = "block"
-    els.eventForm.style.display = "none"
+    els.eventForm.classList.remove("show")
   } else {
     // Show form directly if no events
     els.eventsList.style.display = "none"
     els.addEventBtn.style.display = "none"
-    els.eventForm.style.display = "block"
+    els.eventForm.classList.add("show")
     clearForm()
     // Prefill start date from selected day; keep times empty
     const dIso = key
@@ -888,10 +955,14 @@ function showEventsList(list) {
     detailsText += `🍽️ ${event.withFood ? "With Food" : "Without Food"}\n`
 
     // Add meal info if available
-    if (event.withFood && event.meal) {
-      const mealName = event.meal === "chicken-qorma" ? "Chicken Qorma" : 
-                      event.meal === "mutton-qorma" ? "Mutton Qorma" : event.meal
-      detailsText += `🥘 ${mealName}\n`
+    if (event.withFood) {
+      if (event.mealTitle) {
+        detailsText += `🥘 ${event.mealTitle}\n`
+      } else if (event.meal) {
+        const mealName = event.meal === "chicken-qorma" ? "Chicken Qorma" : 
+                        event.meal === "mutton-qorma" ? "Mutton Qorma" : event.meal
+        detailsText += `🥘 ${mealName}\n`
+      }
     }
 
     // Add meal type info
@@ -924,10 +995,26 @@ function showEventsList(list) {
       notesContent += `"${event.notes.replace(/\n/g, '<br>').replace(/\s/g, '&nbsp;')}"`
     }
     
-    // Add meal items if available
-    if (event.withFood && event.mealItems) {
+    // Add meal items if available (with better formatting)
+    if (event.withFood && (event.mealTitle || event.mealItems)) {
       if (notesContent) notesContent += "<br><br>"
-      notesContent += `<strong>Meal Items:</strong><br>${event.mealItems.replace(/\n/g, '<br>')}`
+      
+      notesContent += `<div class="meal-items-section">`
+      
+      if (event.mealTitle) {
+        notesContent += `<div class="meal-title"><strong>🍽️ ${event.mealTitle}</strong></div>`
+      } else {
+        notesContent += `<strong>🍽️ Meal Items:</strong>`
+      }
+      
+      if (event.mealItems) {
+        const mealItemsText = Array.isArray(event.mealItems) 
+          ? event.mealItems.join('<br>')
+          : event.mealItems.replace(/\n/g, '<br>')
+        notesContent += `<div class="meal-items-list">${mealItemsText}</div>`
+      }
+      
+      notesContent += `</div>`
     }
     
     if (notesContent) {
@@ -996,7 +1083,13 @@ function editEvent(index) {
   
   // Handle meal fields
   els.evMeal.value = event.meal || ""
-  els.evMealItems.value = event.mealItems || ""
+  
+  // Populate meal items - handle both old string format and new array format
+  if (event.mealItems) {
+    populateMealItems(event.mealItems)
+  } else {
+    populateMealItems([])
+  }
   
   // Show/hide meal fields based on withFood state
   const showMealFields = event.withFood || false
@@ -1006,7 +1099,7 @@ function editEvent(index) {
 
   els.eventsList.style.display = "none"
   els.addEventBtn.style.display = "none"
-  els.eventForm.style.display = "block"
+  els.eventForm.classList.add("show")
 
   // Store the index and ID being edited
   els.eventForm.dataset.editIndex = index
@@ -1028,7 +1121,7 @@ async function deleteEvent(index) {
     } else {
       els.eventsList.style.display = "none"
       els.addEventBtn.style.display = "none"
-      els.eventForm.style.display = "block"
+      els.eventForm.classList.add("show")
       clearForm()
     }
     return
@@ -1049,11 +1142,17 @@ async function deleteEvent(index) {
     const updatedList = events[selectedKey] || []
     if (updatedList.length > 0) {
       showEventsList(updatedList)
+      els.addEventBtn.style.display = "block"
+      els.eventForm.classList.remove("show")
     } else {
       els.eventsList.style.display = "none"
       els.addEventBtn.style.display = "none"
-      els.eventForm.style.display = "block"
+      els.eventForm.classList.add("show")
       clearForm()
+      // Prefill start date from selected day
+      els.evStartDate.value = selectedKey
+      els.evStartTime.value = ""
+      els.evEndTime.value = ""
     }
   } catch (error) {
     alert("Failed to delete event. Please try again.")
@@ -1068,31 +1167,36 @@ async function deleteEvent(index) {
 }
 
 function clearForm() {
-  els.evTitle.value = ""
-  els.evNotes.value = ""
-  els.evStartDate.value = ""
-  els.evStartTime.value = ""
-  els.evEndTime.value = ""
-  els.evType.value = "booking"
-  els.evMealType.value = "lunch"
-  els.evGuestName.value = ""
-  els.evPhone.value = ""
-  els.evPax.value = ""
-  els.evVenue.value = "Dar-ul-Khaas"
-  els.evWithFood.checked = false
-  els.evMeal.value = ""
-  els.evMealItems.value = ""
-  delete els.eventForm.dataset.editIndex
-  delete els.eventForm.dataset.editEventId
+  if (els.evTitle) els.evTitle.value = ""
+  if (els.evNotes) els.evNotes.value = ""
+  if (els.evStartDate) els.evStartDate.value = ""
+  if (els.evStartTime) els.evStartTime.value = ""
+  if (els.evEndTime) els.evEndTime.value = ""
+  if (els.evType) els.evType.value = "booking"
+  if (els.evMealType) els.evMealType.value = "lunch"
+  if (els.evGuestName) els.evGuestName.value = ""
+  if (els.evPhone) els.evPhone.value = ""
+  if (els.evPax) els.evPax.value = ""
+  if (els.evVenue) els.evVenue.value = "Dar-ul-Khaas"
+  if (els.evWithFood) els.evWithFood.checked = false
+  if (els.evMeal) els.evMeal.value = ""
+  if (els.evMealTitle) els.evMealTitle.value = ""
+  if (els.evMealItems) els.evMealItems.value = ""
+  if (els.eventForm) {
+    delete els.eventForm.dataset.editIndex
+    delete els.eventForm.dataset.editEventId
+  }
 
   // Hide meal fields by default
-  els.mealFields.forEach(field => {
-    field.style.display = "none"
-  })
+  if (els.mealFields) {
+    els.mealFields.forEach(field => {
+      field.style.display = "none"
+    })
+  }
 
   // Set default times for lunch
-  els.evStartTime.value = "12:00"
-  els.evEndTime.value = "16:00"
+  if (els.evStartTime) els.evStartTime.value = "12:00"
+  if (els.evEndTime) els.evEndTime.value = "16:00"
 }
 
 // Actions
@@ -1142,6 +1246,12 @@ els.eventForm.addEventListener("submit", async (e) => {
     return
   }
 
+  // Check if required elements exist
+  if (!els.evStartDate || !els.evStartTime || !els.evEndTime || !els.evTitle || !els.evPax) {
+    alert("Form elements not loaded properly. Please refresh the page.")
+    return
+  }
+
   // Compose ISO datetimes from date+time; times are required by inputs
   const startIso = new Date(
     `${els.evStartDate.value}T${els.evStartTime.value}:00`
@@ -1164,18 +1274,18 @@ els.eventForm.addEventListener("submit", async (e) => {
 
   const entry = {
     title: els.evTitle.value.trim(),
-    notes: els.evNotes.value.trim() || "",
+    notes: els.evNotes ? els.evNotes.value.trim() : "",
     start: startIso,
     end: endIso,
-    guestName: els.evGuestName.value.trim(),
-    phone: els.evPhone.value.trim(),
+    guestName: els.evGuestName ? els.evGuestName.value.trim() : "",
+    phone: els.evPhone ? els.evPhone.value.trim() : "",
     pax: paxVal,
-    venue: els.evVenue.value,
-    withFood: els.evWithFood.checked,
-    mealType: els.evMealType.value,
-    type: els.evType.value,
-    meal: els.evMeal.value || "",
-    mealItems: els.evMealItems.value || ""
+    venue: els.evVenue ? els.evVenue.value : "",
+    withFood: els.evWithFood ? els.evWithFood.checked : false,
+    mealType: els.evMealType ? els.evMealType.value : "",
+    type: els.evType ? els.evType.value : "booking",
+    meal: els.evMeal ? els.evMeal.value : "",
+    mealItems: getMealItemValues()
   }
 
   try {
@@ -1196,10 +1306,12 @@ els.eventForm.addEventListener("submit", async (e) => {
       const list = events[selectedKey] || []
       showEventsList(list)
       els.addEventBtn.style.display = "block"
-      els.eventForm.style.display = "none"
+      els.eventForm.classList.remove("show")
     }
   } catch (error) {
-    alert("Failed to save event. Please try again.")
+    console.error("Save event error:", error)
+    console.error("Error details:", error.message)
+    alert(`Failed to save event: ${error.message || 'Unknown error'}`)
   } finally {
     els.save.classList.remove("loading")
     els.save.disabled = false
@@ -1213,7 +1325,7 @@ els.cancel.addEventListener("click", () => {
     if (list.length > 0) {
       showEventsList(list)
       els.addEventBtn.style.display = "block"
-      els.eventForm.style.display = "none"
+      els.eventForm.classList.remove("show")
     } else {
       closeSheet()
     }
@@ -1227,7 +1339,7 @@ els.addEventBtn.addEventListener("click", () => {
   clearForm()
   els.eventsList.style.display = "none"
   els.addEventBtn.style.display = "none"
-  els.eventForm.style.display = "block"
+  els.eventForm.classList.add("show")
   if (selectedKey) {
     els.evStartDate.value = selectedKey
     els.evStartTime.value = ""
@@ -1262,17 +1374,89 @@ els.evWithFood.addEventListener("change", (e) => {
   // Clear meal selection when hiding fields
   if (!showMealFields) {
     els.evMeal.value = ""
+    els.evMealTitle.value = ""
     els.evMealItems.value = ""
   }
+})
+
+// Meal management functions
+function addMealItem(value = "") {
+  const container = els.mealItemsContainer
+  const itemDiv = document.createElement("div")
+  itemDiv.className = "meal-item-input"
+  
+  const input = document.createElement("input")
+  input.type = "text"
+  input.className = "meal-item-input-field"
+  input.placeholder = "e.g., Chicken Qorma"
+  input.value = value
+  
+  const removeBtn = document.createElement("button")
+  removeBtn.type = "button"
+  removeBtn.className = "meal-item-remove"
+  removeBtn.textContent = "×"
+  removeBtn.addEventListener("click", () => removeMealItem(itemDiv))
+  
+  itemDiv.appendChild(input)
+  itemDiv.appendChild(removeBtn)
+  container.appendChild(itemDiv)
+  
+  // Focus on the new input
+  input.focus()
+  
+  return itemDiv
+}
+
+function removeMealItem(itemDiv) {
+  itemDiv.remove()
+}
+
+function clearMealItems() {
+  els.mealItemsContainer.innerHTML = ""
+}
+
+function getMealItemValues() {
+  if (!els.mealItemsContainer) return []
+  const inputs = els.mealItemsContainer.querySelectorAll(".meal-item-input-field")
+  return Array.from(inputs)
+    .map(input => input.value.trim())
+    .filter(value => value.length > 0)
+}
+
+function populateMealItems(items = []) {
+  clearMealItems()
+  if (Array.isArray(items) && items.length > 0) {
+    items.forEach(item => addMealItem(item))
+  } else if (typeof items === "string" && items.trim()) {
+    // Handle backwards compatibility with old string format
+    const itemsList = items.split('\n').filter(item => item.trim())
+    itemsList.forEach(item => addMealItem(item.trim()))
+  }
+  
+  // Always ensure at least one empty input for new items
+  if (els.mealItemsContainer.children.length === 0) {
+    addMealItem()
+  }
+}
+
+// Add meal item button handler
+els.addMealItemBtn.addEventListener("click", () => {
+  addMealItem()
 })
 
 // Meal selection handler
 els.evMeal.addEventListener("change", (e) => {
   const selectedMeal = e.target.value
   if (selectedMeal && mealItems[selectedMeal]) {
-    els.evMealItems.value = mealItems[selectedMeal]
-  } else {
-    els.evMealItems.value = ""
+    // Only populate if container is empty to avoid overwriting
+    if (els.mealItemsContainer.children.length === 0) {
+      populateMealItems(mealItems[selectedMeal])
+    } else {
+      // Ask user if they want to replace existing items
+      if (confirm("Replace current meal items with the selected menu?")) {
+        populateMealItems(mealItems[selectedMeal])
+      }
+    }
   }
 })
 

@@ -16,8 +16,8 @@ export interface Event {
   withFood?: boolean
   mealType?: string
   type?: string
-  meal?: string
-  mealItems?: string
+  meal?: "chicken-qorma" | "mutton-qorma" | "" // Enum for meal types
+  mealItems?: string[] // Changed from string to array
 }
 
 export type EventsData = Record<string, Event[]>
