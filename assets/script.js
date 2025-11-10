@@ -463,12 +463,20 @@ function cellTemplate(dateObj, faded) {
     const p = document.createElement("span")
     p.className = "pill"
     p.textContent = e.title
+    p.addEventListener("click", (event) => {
+      event.stopPropagation()
+      openSheetForDate(key)
+    })
     eventWrap.appendChild(p)
   })
   if ((events[key] || []).length > 3) {
     const more = document.createElement("span")
     more.className = "pill"
     more.textContent = `+${events[key].length - 3} more`
+    more.addEventListener("click", (event) => {
+      event.stopPropagation()
+      openSheetForDate(key)
+    })
     eventWrap.appendChild(more)
   }
 
