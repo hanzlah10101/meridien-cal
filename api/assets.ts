@@ -9,10 +9,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let filePath: string
     let contentType: string
 
-    if (pathname === "/assets/styles.css") {
+    // Handle query parameters for cache-busting
+    const cleanPathname = pathname.split('?')[0]
+    
+    if (cleanPathname === "/assets/styles.css") {
       filePath = path.join(process.cwd(), "assets", "styles.css")
       contentType = "text/css"
-    } else if (pathname === "/assets/script.js") {
+    } else if (cleanPathname === "/assets/script.js") {
       filePath = path.join(process.cwd(), "assets", "script.js")
       contentType = "application/javascript"
     } else {
@@ -28,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const fileContent = fs.readFileSync(filePath, "utf-8")
 
     res.setHeader("Content-Type", contentType)
-    res.setHeader("Cache-Control", "public, max-age=31536000, immutable")
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, proxy-revalidate")
 
     return res.send(fileContent)
   } catch (error) {

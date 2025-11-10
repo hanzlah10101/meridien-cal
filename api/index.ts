@@ -21,16 +21,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Serve events page if authenticated
       const htmlPath = path.join(process.cwd(), "assets", "events.html")
-      const htmlContent = fs.readFileSync(htmlPath, "utf-8")
+      let htmlContent = fs.readFileSync(htmlPath, "utf-8")
+      
+      // Add cache-busting timestamp to asset URLs
+      const timestamp = Date.now()
+      htmlContent = htmlContent
+        .replace('/assets/styles.css', `/assets/styles.css?v=${timestamp}`)
+        .replace('/assets/script.js', `/assets/script.js?v=${timestamp}`)
+      
       res.setHeader("Content-Type", "text/html")
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, proxy-revalidate")
       return res.send(htmlContent)
     }
 
     if (pathname === "/login") {
       // Always serve login page
       const htmlPath = path.join(process.cwd(), "assets", "login.html")
-      const htmlContent = fs.readFileSync(htmlPath, "utf-8")
+      let htmlContent = fs.readFileSync(htmlPath, "utf-8")
+      
+      // Add cache-busting timestamp to asset URLs
+      const timestamp = Date.now()
+      htmlContent = htmlContent
+        .replace('/assets/styles.css', `/assets/styles.css?v=${timestamp}`)
+        .replace('/assets/script.js', `/assets/script.js?v=${timestamp}`)
+      
       res.setHeader("Content-Type", "text/html")
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, proxy-revalidate")
       return res.send(htmlContent)
     }
 

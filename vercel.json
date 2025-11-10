@@ -11,11 +11,11 @@
   "outputDirectory": "",
   "headers": [
     {
-      "source": "/assets/(.*)",
+      "source": "/api/assets",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
+          "value": "no-cache, no-store, must-revalidate, proxy-revalidate"
         }
       ]
     },
@@ -24,7 +24,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
+          "value": "no-cache, no-store, must-revalidate, proxy-revalidate"
         }
       ]
     },
@@ -33,7 +33,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
+          "value": "no-cache, no-store, must-revalidate, proxy-revalidate"
         }
       ]
     }

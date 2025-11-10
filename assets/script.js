@@ -11,6 +11,15 @@ const firebaseConfig = {
   measurementId: "G-TQ3SDN7CF6"
 }
 
+// Clear any existing service workers to prevent caching issues
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+    for(let registration of registrations) {
+      registration.unregister()
+    }
+  })
+}
+
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig)
 const auth = firebase.auth()
