@@ -374,7 +374,20 @@ const els = {
   addMealItemBtn: document.getElementById("add-meal-item"),
   mealFields: document.querySelectorAll(".meal-fields"),
   save: document.getElementById("save"),
-  cancel: document.getElementById("cancel")
+  cancel: document.getElementById("cancel"),
+
+  // Password Change Modal
+  changePasswordBtn: document.getElementById("changePassword"),
+  passwordChangeModal: document.getElementById("passwordChangeModal"),
+  modalOverlay: document.getElementById("modalOverlay"),
+  cancelPasswordChange: document.getElementById("cancelPasswordChange"),
+  passwordChangeForm: document.getElementById("passwordChangeForm"),
+  currentPassword: document.getElementById("currentPassword"),
+  newPassword: document.getElementById("newPassword"),
+  confirmPassword: document.getElementById("confirmPassword"),
+  submitPasswordChange: document.getElementById("submitPasswordChange"),
+  passwordChangeSuccess: document.getElementById("passwordChangeSuccess"),
+  passwordChangeError: document.getElementById("passwordChangeError"),
 }
 
 // Try detect Hijri support
@@ -1625,11 +1638,105 @@ loadEvents(true) // Load events from API first
 updateNavigationButtons()
 
 // Populate year selector and add change event
+
 populateYearSelector()
+
 populateVenueSelector()
+
 els.year.addEventListener("change", (e) => {
+
   const selectedYear = parseInt(e.target.value)
+
   view = new Date(selectedYear, view.getMonth(), 1)
+
   render()
+
   updateNavigationButtons()
+
 })
+
+
+
+// --- Password Change Modal Logic ---
+function openPasswordChangeModal() {
+    els.passwordChangeModal.classList.remove('hide');
+    els.passwordChangeModal.classList.add('show');
+    els.modalOverlay.classList.add('show');
+}
+
+function closePasswordChangeModal() {
+    els.passwordChangeModal.classList.add('hide');
+    els.modalOverlay.classList.remove('show');
+    els.passwordChangeModal.addEventListener('animationend', () => {
+        els.passwordChangeModal.classList.remove('show');
+        els.passwordChangeForm.reset();
+        els.passwordChangeError.style.display = 'none';
+        els.passwordChangeSuccess.style.display = 'none';
+    }, { once: true });
+}
+
+els.changePasswordBtn.addEventListener('click', openPasswordChangeModal);
+els.cancelPasswordChange.addEventListener('click', closePasswordChangeModal);
+els.modalOverlay.addEventListener('click', closePasswordChangeModal);
+
+els.passwordChangeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const currentPassword = els.currentPassword.value;
+    const newPassword = els.newPassword.value;
+    const confirmPassword = els.confirmPassword.value;
+
+    if (!currentPassword) {
+        els.passwordChangeError.textContent = "Please enter your current password.";
+        els.passwordChangeError.style.display = 'block';
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        els.passwordChangeError.textContent = "New passwords do not match.";
+        els.passwordChangeError.style.display = 'block';
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        els.passwordChangeError.textContent = "New password must be at least 6 characters long.";
+        els.passwordChangeError.style.display = 'block';
+        return;
+    }
+
+    els.passwordChangeError.style.display = 'none';
+    els.submitPasswordChange.classList.add('loading');
+    els.submitPasswordChange.disabled = true;
+
+    try {
+        const user = auth.currentUser;
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+
+        // Re-authenticate user
+        await user.reauthenticateWithCredential(credential);
+
+        // If re-authentication is successful, update the password
+        await user.updatePassword(newPassword);
+
+        els.passwordChangeSuccess.textContent = "Password updated successfully!";
+        els.passwordChangeSuccess.style.display = 'block';
+
+        setTimeout(() => {
+            closePasswordChangeModal();
+        }, 2000);
+
+    } catch (error) {
+        console.error("Password change error:", error);
+        let errorMessage = "Failed to update password. Please try again.";
+        if (error.code === 'auth/wrong-password') {
+            errorMessage = "Incorrect current password.";
+        } else if (error.code === 'auth/too-many-requests') {
+            errorMessage = "Too many attempts. Please try again later.";
+        }
+        els.passwordChangeError.textContent = errorMessage;
+        els.passwordChangeError.style.display = 'block';
+    } finally {
+        els.submitPasswordChange.classList.remove('loading');
+        els.submitPasswordChange.disabled = false;
+    }
+});
